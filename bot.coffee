@@ -246,24 +246,6 @@ handleMessage = (bot, sender, channel, isDirect, msg) ->
         userIdsToNames[sender] = name
       _handleMessage bot, name, channel, isDirect, msg
 
-parse = (sender, value) ->
-  value = oneOf(value.split(/\s+or\s+/i)).trim()
-
-  isReply = (/^<reply>\s*/i).test(value)
-  value = value.replace(/^<reply>\s*/i, '') if isReply
-
-  isEmote = (/^\/me\s+/i).test(value)
-  value = value.replace(/^\/me\s+/i, '') if isEmote
-
-  value = value.replace(/\$who/ig, sender)
-
-  if isReply
-    return value
-  else if isEmote
-    return "/me #{value}"
-  else
-    return "#{key} is #{value}"
-
 _handleMessage = (bot, sender, channel, isDirect, msg) ->
   team = bot.identifyTeam()
 
@@ -276,6 +258,25 @@ _handleMessage = (bot, sender, channel, isDirect, msg) ->
   msg = msg.substr(0, mbMeta.maxFactoidSize).trim().replace(/\0/g, '').replace(/\n/g, ' ')
 
   reply = (text) -> bot.reply {channel: channel}, {text: text}
+
+  parseAndReply = (value) ->
+    value = oneOf(value.split(/\s+or\s+/i)).trim()
+
+    isReply = (/^<reply>\s*/i).test(value)
+    value = value.replace(/^<reply>\s*/i, '') if isReply
+
+    isEmote = (/^\/me\s+/i).test(value)
+    value = value.replace(/^\/me\s+/i, '') if isEmote
+
+    value = value.replace(/\$who/ig, sender)
+
+    if isReply
+      reply value
+    else if isEmote
+      bot.api.callAPI 'chat.meMessage', {channel: channel, text: value}, (err, res) ->
+        log.error(err) if err
+    else
+      reply "#{key} is #{value}"
 
   update = (key, value) ->
     # TODO: Use plan limits
@@ -325,7 +326,7 @@ _handleMessage = (bot, sender, channel, isDirect, msg) ->
       if not current?
         reply oneOf "I don't know what that is.", "I have no idea.", "No idea.", "I don't know."
         return
-      reply parse sender, current
+      parseAndReply current
     return
 
   # Updating factoids {{{2
@@ -366,9 +367,8 @@ _handleMessage = (bot, sender, channel, isDirect, msg) ->
   # Getting regular factoids, last chance {{{3
   else
     getFactoid team, msg, (err, value) ->
-      console.log 'XXX', value
       if value?
-        reply parse sender, value
+        parseAndReply value
     return
 
   return
