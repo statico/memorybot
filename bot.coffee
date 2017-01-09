@@ -95,6 +95,7 @@ setMetaData = (team, key, value, cb) ->
       async.series [
         (cb) -> db.run "CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT)", cb
         (cb) -> db.run "CREATE TABLE factoids (key TEXT PRIMARY KEY, value TEXT, last_edit TEXT)", cb
+        (cb) -> db.run "CREATE TABLE karma (key TEXT PRIMARY KEY, value INTEGER)", cb
         (cb) -> db.run "INSERT INTO metadata VALUES($key, $value)", {$key: key, $value: value}, cb
         (cb) -> db.run "INSERT INTO metadata VALUES('direct', 'no')", cb
         (cb) -> db.run "INSERT INTO metadata VALUES('ambient', 'yes')", cb
@@ -153,6 +154,23 @@ setFactoid = (team, key, value, lastEdit, cb) ->
 
   db.run "INSERT OR REPLACE INTO factoids VALUES($key, $value, $lastEdit)", {$key: key, $value: value, $lastEdit: lastEdit}, (err) ->
     if err then return cb "Couldn't update factoid for team #{team}: #{err}"
+    log.info "Set factoid key #{key} for team #{team}"
+    return cb null
+
+getKarma = (team, key, cb) ->
+  db = getDatabase team
+  if not db? then return cb "Couldn't get database for team #{team}"
+
+  db.get "SELECT value FROM karma WHERE key = $key", {$key: key}, (err, row) ->
+    if err then return cb "Couldn't get karma for team #{team}: #{err}"
+    return cb null, row?.value or null
+
+setKarma = (team, key, value, cb) ->
+  db = getDatabase team
+  if not db? then return cb "Couldn't get database for team #{team}"
+
+  db.run "INSERT OR REPLACE INTO karma VALUES($key, $value)", {$key: key, $value: value}, (err) ->
+    if err then return cb "Couldn't update karma for team #{team}: #{err}"
     log.info "Set factoid key #{key} for team #{team}"
     return cb null
 
@@ -260,13 +278,13 @@ _handleMessage = (bot, sender, channel, isDirect, msg) ->
   reply = (text) -> bot.reply {channel: channel}, {text: text}
 
   parseAndReply = (value) ->
-    value = oneOf(value.split(/\s+or\s+/i)).trim()
+    value = oneOf(value.split(/\s+|\s+/i)).trim()
 
     isReply = (/^<reply>\s*/i).test(value)
     value = value.replace(/^<reply>\s*/i, '') if isReply
 
-    isEmote = (/^\/me\s+/i).test(value)
-    value = value.replace(/^\/me\s+/i, '') if isEmote
+    isEmote = (/^<action>\s+/i).test(value)
+    value = value.replace(/^<action>\s+/i, '') if isEmote
 
     value = value.replace(/\$who/ig, sender)
 
@@ -350,7 +368,10 @@ _handleMessage = (bot, sender, channel, isDirect, msg) ->
         update key, value
 
       else if current and isAppending
-        value = "#{current} or #{value}"
+        if /^|/.test value
+          value = "#{current}#{value}"
+        else
+          value = "#{current} or #{value}"
         update key, value
 
       else if current == value
@@ -362,6 +383,51 @@ _handleMessage = (bot, sender, channel, isDirect, msg) ->
       else
         update key, value
 
+    return
+
+  # Karma query
+  else if (/^karma\s+for\s+/i).test(msg)
+    key = msg.replace(/^karma\s+for\s+/i, '').replace(/\?+$/, '')
+    getKarma team, key, (err, current) ->
+      current or= 0
+      if err
+        log.error err
+        if isVerbose then reply "There was an error getting the karma. Please try again."
+      else
+        reply "Karma for #{key} is #{current}"
+      return
+    return
+
+  # Karma increment/decrement
+  else if /\+\+(\s#.+)?$/.test(msg)
+    if isDirect then return reply "You cannot secretly change the karma for something!"
+    key = msg.split(/\+\+/)[0]
+    getKarma team, key, (err, current) ->
+      if err then return log.error(err)
+      value = Number(current or 0)
+      value++
+      setKarma team, key, value, (err) ->
+        if err
+          log.error err
+          if isVerbose then reply "There was an error changing the karma. Please try again."
+        return
+      return
+    return
+
+  # Karma decrement
+  else if /\-\-(\s#.+)?$/.test(msg)
+    if isDirect then return reply "You cannot secretly change the karma for something!"
+    key = msg.split(/\-\-/)[0]
+    getKarma team, key, (err, current) ->
+      if err then return log.error(err)
+      value = Number(current or 0)
+      value--
+      setKarma team, key, value, (err) ->
+        if err
+          log.error err
+          if isVerbose then reply "There was an error changing the karma. Please try again."
+        return
+      return
     return
 
   # Getting regular factoids, last chance {{{3
