@@ -1,5 +1,7 @@
 #!/usr/bin/env coffee
 
+# INIT ---------------------------------------------------------------------#{{{1
+
 require('dotenv').config()
 
 Botkit = require 'botkit'
@@ -8,7 +10,7 @@ async = require 'artillery-async'
 bodyParser = require 'body-parser'
 express = require 'express'
 fs = require 'graceful-fs'
-log = require 'winston'
+winston = require 'winston'
 passport = require 'passport'
 sqlite3 = require('sqlite3').verbose()
 {inspect} = require 'util'
@@ -16,7 +18,11 @@ sqlite3 = require('sqlite3').verbose()
 
 app = express()
 
-# AUTH --------------------------------------------------------------------------
+log = winston
+log.remove(winston.transports.Console);
+log.add(winston.transports.Console, {'timestamp':true});
+
+# AUTH ---------------------------------------------------------------------#{{{1
 
 passport.use new SlackStrategy {
   clientID: process.env.SLACK_CLIENT_ID
@@ -55,7 +61,7 @@ app.get '/auth/slack/callback',
 app.listen process.env.PORT, ->
   log.info "Listening on #{process.env.PORT}..."
 
-# FUNCTIONS ---------------------------------------------------------------------
+# FUNCTIONS ----------------------------------------------------------------#{{{1
 
 getDatabase = (team) ->
   if not process.env.DATA_DIR? then throw new Error('DATA_DIR missing')
@@ -81,6 +87,8 @@ setMetaData = (team, key, value, cb) ->
         (cb) -> db.run "INSERT INTO metadata VALUES($key, $value)", {$key: key, $value: value}, cb
         (cb) -> db.run "INSERT INTO metadata VALUES('direct', 'no')", cb
         (cb) -> db.run "INSERT INTO metadata VALUES('ambient', 'yes')", cb
+        (cb) -> db.run "INSERT INTO metadata VALUES('verbose', 'no')", cb
+        (cb) -> db.run "INSERT INTO metadata VALUES('plan', 'free')", cb
       ], (err) ->
         if err then return cb "Couldn't initialize metadata for team #{team}: #{err}"
         log.info "Set metadata key #{key} for team #{team} with new table"
@@ -99,11 +107,33 @@ updateBotMetadata = (bot, team, cb) ->
   db.all "SELECT key, value FROM metadata", (err, rows) ->
     if err then return cb "Couldn't get metadata for team #{team}: #{err}"
     for {key, value} in rows
-      bot.mbMeta[key] = value
+      if key is 'yes'
+        bot.mbMeta[key] = true
+      if key is 'no'
+        bot.mbMeta[key] = false
+      else
+        bot.mbMeta[key] = value
+    return cb null
+
+getFactoid = (team, key, cb) ->
+  db = getDatabase team
+  if not db? then return cb "Couldn't get database for team #{team}"
+
+  db.get "SELECT value FROM factoids WHERE key = $key", {$key: key}, (err, row) ->
+    if err then return cb "Couldn't get factoid for team #{team}: #{err}"
+    return cb null, row?.value or null
+
+setFactoid = (team, key, value, lastEdit, cb) ->
+  db = getDatabase team
+  if not db? then return cb "Couldn't get database for team #{team}"
+
+  db.run "INSERT OR REPLACE INTO factoids VALUES($key, $value, $lastEdit)", {$key: key, $value: value, $lastEdit: lastEdit}, (err) ->
+    if err then return cb "Couldn't update factoid for team #{team}: #{err}"
+    log.info "Set factoid key #{key} for team #{team}"
     return cb null
 
 
-# BOTS --------------------------------------------------------------------------
+# BOTS ---------------------------------------------------------------------#{{{1
 
 bots = {}
 
@@ -129,11 +159,11 @@ controller = Botkit.slackbot(
 
 controller.on 'direct_mention', (bot, msg) ->
   return if msg.user is bot.identity?.id
-  handleMessage bot, msg.channel, true, msg.text
+  handleMessage bot, msg.user, msg.channel, true, msg.text
 
 controller.on 'direct_message', (bot, msg) ->
   return if msg.user is bot.identity?.id
-  handleMessage bot, msg.channel, true, msg.text
+  handleMessage bot, msg.user, msg.channel, true, msg.text
 
 controller.on 'ambient', (bot, msg) ->
   return if msg.user is bot.identity?.id
@@ -141,9 +171,9 @@ controller.on 'ambient', (bot, msg) ->
   text = msg.text
   if text.toLowerCase().indexOf("#{ name } ") == 0
     text = text.substr(name.length + 1)
-    handleMessage bot, msg.channel, true, text
+    handleMessage bot, msg.user, msg.channel, true, text
   else
-    handleMessage bot, msg.channel, false, text
+    handleMessage bot, msg.user, msg.channel, false, text
   return
 
 startBot = (team) ->
@@ -169,14 +199,55 @@ for file in fs.readdirSync process.env.DATA_DIR
   log.info "Found db file for #{file}"
   startBot(file)
 
-# LOGIC -------------------------------------------------------------------------
+# LOGIC --------------------------------------------------------------------#{{{1
 
-handleMessage = (bot, channel, isDirect, message) ->
+handleMessage = (bot, from, channel, isDirect, msg) ->
   team = bot.identifyTeam()
+  {mbMeta} = bot
+  msg = msg.trim().replace(/\0/g, '').replace(/\n/g, ' ')
+  reply = (text) -> bot.reply {channel: channel}, {text: text}
+  update = (key, value) ->
+    lastEdit = "on #{new Date()} by #{from}"
+    setFactoid team, key, value, lastEdit, (err) ->
+      if err
+        log.error err
+        if mbMeta.verbose then reply "There was an error updating that factoid. Please try again."
+      else
+        if mbMeta.verbose then reply "OK, #{key} is now #{value}"
+      return
+    return
 
-  bot.reply {
-    channel: channel
-  }, {
-    text: ":star: channel=#{channel} isDirect=#{isDirect} message=#{message}"
-  }
+  # Updating factoids {{{2
+  if (/\s+is\s+/i).test(msg) and (isDirect or mbMeta.ambient)
+    [key, value] = msg.split /\s+is\s+/i
+    key = key.toLowerCase()
 
+    isCorrecting = (/no,?\s+/i).test(key)
+    key = key.replace(/no,?\s+/i, '') if isCorrecting
+
+    isAppending = (/also,?\s+/i).test(key)
+    key = key.replace(/also,?\s+/i, '') if isAppending
+
+    isAppending or= (/also,?\s+/i).test(value)
+    value = value.replace(/also,?\s+/i, '') if isAppending
+
+    getFactoid team, key, (err, current) ->
+      if err then return log.error(err)
+
+      if current and isCorrecting
+        update key, value
+
+      else if current and isAppending
+        value = "#{current} or #{value}"
+        update key, value
+
+      else if current == value
+        reply "I already know that."
+
+      else if current
+        reply "But #{key} is already #{current}"
+
+      else
+        update key, value
+
+  return
