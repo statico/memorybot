@@ -79,6 +79,8 @@ setMetaData = (team, key, value, cb) ->
         (cb) -> db.run "CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT)", cb
         (cb) -> db.run "CREATE TABLE factoids (key TEXT PRIMARY KEY, value TEXT, last_edit TEXT)", cb
         (cb) -> db.run "INSERT INTO metadata VALUES($key, $value)", {$key: key, $value: value}, cb
+        (cb) -> db.run "INSERT INTO metadata VALUES('direct', 'no')", cb
+        (cb) -> db.run "INSERT INTO metadata VALUES('ambient', 'yes')", cb
       ], (err) ->
         if err then return cb "Couldn't initialize metadata for team #{team}: #{err}"
         log.info "Set metadata key #{key} for team #{team} with new table"
@@ -88,6 +90,18 @@ setMetaData = (team, key, value, cb) ->
         if err then return cb "Couldn't update metadata for team #{team}: #{err}"
         log.info "Set metadata key #{key} for team #{team} with existing table"
         return cb null
+
+updateBotMetadata = (bot, team, cb) ->
+  db = getDatabase team
+  if not db? then return cb "Couldn't get database for team #{team}"
+
+  bot.mbMeta ?= {}
+  db.all "SELECT key, value FROM metadata", (err, rows) ->
+    if err then return cb "Couldn't get metadata for team #{team}: #{err}"
+    for {key, value} in rows
+      bot.mbMeta[key] = value
+    return cb null
+
 
 # BOTS --------------------------------------------------------------------------
 
@@ -112,14 +126,6 @@ controller = Botkit.slackbot(
       #log.error "Failed to reply: #{err}"
 #for i in ['message_received', 'mention', 'direct_message', 'direct_mention', 'ambient']
   #controller.on i, handler(i)
-
-handleMessage = (bot, channel, isDirect, message) ->
-  team = bot.identifyTeam()
-  bot.reply {
-    channel: channel
-  }, {
-    text: ":star: channel=#{channel} isDirect=#{isDirect} message=#{message}"
-  }
 
 controller.on 'direct_mention', (bot, msg) ->
   return if msg.user is bot.identity?.id
@@ -151,12 +157,26 @@ startBot = (team) ->
     if err
       log.error "Couldn't get token for #{team}: #{err}"
       return
+
     bot = bots[team] = controller.spawn(token: token)
-    bot.startRTM()
+    updateBotMetadata bot, team, (err) ->
+      if err
+        log.error "Couldn't update bot metadata: #{err}"
+        return
+      bot.startRTM()
 
 for file in fs.readdirSync process.env.DATA_DIR
   log.info "Found db file for #{file}"
   startBot(file)
 
 # LOGIC -------------------------------------------------------------------------
+
+handleMessage = (bot, channel, isDirect, message) ->
+  team = bot.identifyTeam()
+
+  bot.reply {
+    channel: channel
+  }, {
+    text: ":star: channel=#{channel} isDirect=#{isDirect} message=#{message}"
+  }
 
