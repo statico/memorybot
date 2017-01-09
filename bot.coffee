@@ -33,6 +33,13 @@ PLANS =
     maxFactoidSize: 2048
     maxFactoids: Infinity
 
+I_DONT_KNOW = [
+  "I don't know what that is."
+  "I have no idea."
+  "No idea."
+  "I don't know."
+]
+
 # AUTH ---------------------------------------------------------------------#{{{1
 
 passport.use new SlackStrategy {
@@ -119,9 +126,9 @@ updateBotMetadata = (bot, team, cb) ->
   db.all "SELECT key, value FROM metadata", (err, rows) ->
     if err then return cb "Couldn't get metadata for team #{team}: #{err}"
     for {key, value} in rows
-      if key is 'yes'
+      if value is 'yes'
         bot.mbMeta[key] = true
-      if key is 'no'
+      if value is 'no'
         bot.mbMeta[key] = false
       else
         bot.mbMeta[key] = value
@@ -277,8 +284,10 @@ _handleMessage = (bot, sender, channel, isDirect, msg) ->
 
   reply = (text) -> bot.reply {channel: channel}, {text: text}
 
-  parseAndReply = (value) ->
-    value = oneOf(value.split(/\s+|\s+/i)).trim()
+  parseAndReply = (key, value, tell=null) ->
+    value = value.replace(/\\\|/g, '\\&#124;')
+    value = oneOf(value.split(/\|/i)).trim()
+    value = value.replace(/&#124;/g, '|')
 
     isReply = (/^<reply>\s*/i).test(value)
     value = value.replace(/^<reply>\s*/i, '') if isReply
@@ -288,7 +297,9 @@ _handleMessage = (bot, sender, channel, isDirect, msg) ->
 
     value = value.replace(/\$who/ig, sender)
 
-    if isReply
+    if tell?
+      bot.reply {channel: tell}, {text: "#{sender} wants you to know: #{key} is #{value}"}
+    else if isReply
       reply value
     else if isEmote
       bot.api.callAPI 'chat.meMessage', {channel: channel, text: value}, (err, res) ->
@@ -334,7 +345,7 @@ _handleMessage = (bot, sender, channel, isDirect, msg) ->
       if current?
         reply "#{key} is #{current}"
       else
-        reply oneOf "I don't know what that is.", "I have no idea.", "No idea.", "I don't know."
+        reply oneOf I_DONT_KNOW
     return
 
   # Getting regular factoids {{{2
@@ -342,9 +353,9 @@ _handleMessage = (bot, sender, channel, isDirect, msg) ->
     key = msg.replace(/^wh?at\s+is\s+/i, '').replace(/\?+$/, '').replace(/^the\s+/i, '')
     getFactoid team, key, (err, current) ->
       if not current?
-        reply oneOf "I don't know what that is.", "I have no idea.", "No idea.", "I don't know."
+        reply oneOf I_DONT_KNOW
         return
-      parseAndReply current
+      parseAndReply key, current
     return
 
   # Updating factoids {{{2
@@ -385,7 +396,48 @@ _handleMessage = (bot, sender, channel, isDirect, msg) ->
 
     return
 
-  # Karma query
+  # Tell users about things
+  else if (/^tell\s+\S+\s+about\s+/i).test(msg)
+    bot.api.users.list {}, (err, res) ->
+      if err
+        log.error err
+        if isDirect then reply "There was an error while downloading the list of users. Please try again."
+        return
+
+      msg = msg.replace(/^tell\s+/i, '')
+      [targetName, parts...] = msg.split(/\s*about\s*/i)
+      key = parts.join(' ')
+
+      targetID = null
+      for {id, name} in res.members
+        userIdsToNames[id] = name
+        if name is targetName
+          targetID = id
+
+      if targetID is null
+        reply "I don't know who #{targetName} is."
+        return
+
+      getFactoid team, key, (err, value) ->
+        if not value?
+          reply oneOf I_DONT_KNOW
+          return
+
+        bot.api.im.open {user: targetID}, (err, res) ->
+          if err
+            log.error err
+            if shouldReply then reply "I could not start an IM session with #{targetName}. Please try again."
+            return
+
+          targetChannel = res.channel?.id
+          parseAndReply key, value, targetChannel
+          if shouldReply or isVerbose
+            reply "OK, I told #{targetName} about #{key}"
+
+      return
+    return
+
+  # Karma query {{{2
   else if (/^karma\s+for\s+/i).test(msg)
     key = msg.replace(/^karma\s+for\s+/i, '').replace(/\?+$/, '')
     getKarma team, key, (err, current) ->
@@ -398,7 +450,7 @@ _handleMessage = (bot, sender, channel, isDirect, msg) ->
       return
     return
 
-  # Karma increment/decrement
+  # Karma increment/decrement {{{2
   else if /\+\+(\s#.+)?$/.test(msg)
     if isDirect then return reply "You cannot secretly change the karma for something!"
     key = msg.split(/\+\+/)[0]
@@ -414,7 +466,7 @@ _handleMessage = (bot, sender, channel, isDirect, msg) ->
       return
     return
 
-  # Karma decrement
+  # Karma decrement {{{2
   else if /\-\-(\s#.+)?$/.test(msg)
     if isDirect then return reply "You cannot secretly change the karma for something!"
     key = msg.split(/\-\-/)[0]
@@ -434,7 +486,7 @@ _handleMessage = (bot, sender, channel, isDirect, msg) ->
   else
     getFactoid team, msg, (err, value) ->
       if value?
-        parseAndReply value
+        parseAndReply msg, value
     return
 
   return
