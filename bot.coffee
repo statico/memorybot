@@ -5,6 +5,7 @@
 require('dotenv').config()
 
 Botkit = require 'botkit'
+Entities = require('html-entities').AllHtmlEntities
 SlackStrategy = require('./lib/passport-slack.js')
 async = require 'artillery-async'
 bodyParser = require 'body-parser'
@@ -21,6 +22,16 @@ app = express()
 log = winston
 log.remove(winston.transports.Console);
 log.add(winston.transports.Console, {'timestamp':true});
+
+PLANS =
+  free:
+    planType: 'free'
+    maxFactoidSize: 250
+    maxFactoids: 150
+  paid:
+    planType: 'paid'
+    maxFactoidSize: 2048
+    maxFactoids: Infinity
 
 # AUTH ---------------------------------------------------------------------#{{{1
 
@@ -113,7 +124,20 @@ updateBotMetadata = (bot, team, cb) ->
         bot.mbMeta[key] = false
       else
         bot.mbMeta[key] = value
+
+    plan = bot.mbMeta.plan or 'free'
+    for key, value of PLANS[plan]
+      bot.mbMeta[key] = value
+
     return cb null
+
+countFactoids = (team, cb) ->
+  db = getDatabase team
+  if not db? then return cb "Couldn't get database for team #{team}"
+
+  db.get "SELECT COUNT(*) AS count FROM factoids", (err, row) ->
+    if err then return cb "Couldn't get factoid count for team #{team}: #{err}"
+    return cb null, Number(row?.count) or null
 
 getFactoid = (team, key, cb) ->
   db = getDatabase team
@@ -201,24 +225,111 @@ for file in fs.readdirSync process.env.DATA_DIR
 
 # LOGIC --------------------------------------------------------------------#{{{1
 
-handleMessage = (bot, from, channel, isDirect, msg) ->
+oneOf = ->
+  if Array.isArray arguments[0]
+    arr = arguments[0]
+  else
+    arr = arguments
+  return arr[Math.floor(Math.random() * arr.length)]
+
+userIdsToNames = {}
+
+handleMessage = (bot, sender, channel, isDirect, msg) ->
+  if sender of userIdsToNames
+    _handleMessage bot, userIdsToNames[sender], channel, isDirect, msg
+  else
+    bot.api.users.info {user: sender}, (err, data) ->
+      if err
+        log.error "Could not call users.info for user #{sender}: #{err}"
+      else
+        name = data?.user?.name or sender
+        userIdsToNames[sender] = name
+      _handleMessage bot, name, channel, isDirect, msg
+
+parse = (sender, value) ->
+  value = oneOf(value.split(/\s+or\s+/i)).trim()
+
+  isReply = (/^<reply>\s*/i).test(value)
+  value = value.replace(/^<reply>\s*/i, '') if isReply
+
+  isEmote = (/^\/me\s+/i).test(value)
+  value = value.replace(/^\/me\s+/i, '') if isEmote
+
+  value = value.replace(/\$who/ig, sender)
+
+  if isReply
+    return value
+  else if isEmote
+    return "/me #{value}"
+  else
+    return "#{key} is #{value}"
+
+_handleMessage = (bot, sender, channel, isDirect, msg) ->
   team = bot.identifyTeam()
+
   {mbMeta} = bot
-  msg = msg.trim().replace(/\0/g, '').replace(/\n/g, ' ')
+  shouldLearn = isDirect or mbMeta.ambient
+  shouldReply = isDirect or not mbMeta.direct
+  isVerbose = mbMeta.verbose
+
+  msg = Entities.decode(msg)
+  msg = msg.substr(0, mbMeta.maxFactoidSize).trim().replace(/\0/g, '').replace(/\n/g, ' ')
+
   reply = (text) -> bot.reply {channel: channel}, {text: text}
+
   update = (key, value) ->
-    lastEdit = "on #{new Date()} by #{from}"
+    # TODO: Use plan limits
+    lastEdit = "on #{new Date()} by #{sender}"
     setFactoid team, key, value, lastEdit, (err) ->
       if err
         log.error err
-        if mbMeta.verbose then reply "There was an error updating that factoid. Please try again."
+        if isVerbose then reply "There was an error updating that factoid. Please try again."
       else
-        if mbMeta.verbose then reply "OK, #{key} is now #{value}"
+        if isVerbose then reply "OK, #{key} is now #{value}"
       return
     return
 
+  # Status {{{2
+  if isDirect and msg is 'status'
+    bool = (x) -> if x then ':ballot_box_with_check:' else ':white_medium_square:'
+    countFactoids team, (err, count) ->
+      log.error err if err
+      reply """
+        *Usage*
+        You are on the #{mbMeta.planType} paid plan.
+        You are using #{count}/#{mbMeta.maxFactoids} factoids.
+        Maximum factoid size is #{mbMeta.maxFactoidSize} characters.
+        More info: TODO
+        *Settings*
+        #{bool mbMeta.direct} `direct` - Interactons require direct messages or @-mentions
+        #{bool mbMeta.ambient} `ambient` - Learn factoids from ambient room chatter
+        #{bool mbMeta.verbose} `verbose` - Make the bot more chatty with confirmations, greetings, etc.
+        Tell me "enable setting <name>" or "disable setting <name>" to change the above settings.
+      """
+    return
+
+  # Getting literal factoids {{{2
+  else if shouldReply and (/^literal\s+/i).test(msg)
+    key = msg.replace(/^literal\s+/i, '')
+    getFactoid team, key, (err, current) ->
+      if current?
+        reply "#{key} is #{current}"
+      else
+        reply oneOf "I don't know what that is.", "I have no idea.", "No idea.", "I don't know."
+    return
+
+  # Getting regular factoids {{{2
+  else if shouldReply and ((/^wh?at\s+is\s+/i).test(msg) or /\?+$/.test(msg))
+    key = msg.replace(/^wh?at\s+is\s+/i, '').replace(/\?+$/, '').replace(/^the\s+/i, '')
+    getFactoid team, key, (err, current) ->
+      if not current?
+        reply oneOf "I don't know what that is.", "I have no idea.", "No idea.", "I don't know."
+        return
+      reply parse sender, current
+    return
+
   # Updating factoids {{{2
-  if (/\s+is\s+/i).test(msg) and (isDirect or mbMeta.ambient)
+  else if shouldLearn and (/\s+is\s+/i).test(msg)
     [key, value] = msg.split /\s+is\s+/i
     key = key.toLowerCase()
 
@@ -242,12 +353,22 @@ handleMessage = (bot, from, channel, isDirect, msg) ->
         update key, value
 
       else if current == value
-        reply "I already know that."
+        reply oneOf "I already know that.", "I've already got it as that."
 
       else if current
         reply "But #{key} is already #{current}"
 
       else
         update key, value
+
+    return
+
+  # Getting regular factoids, last chance {{{3
+  else
+    getFactoid team, msg, (err, value) ->
+      console.log 'XXX', value
+      if value?
+        reply parse sender, value
+    return
 
   return
