@@ -7,14 +7,21 @@
     <title>memorybot - an infobot-inspired Slack bot that remembers things</title>
 
     <link rel="icon" href="icon.png"/>
-    <link rel="shortcut icon" href="icon.png"/>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous"/>
-    <link href="narrow-jumbotron.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet"/>
+    <link href="style.css" rel="stylesheet"/>
+
+    <meta name="author" content="Ian Langworth"/>
+    <meta name="description" content="An infobot-inspired Slack bot that remembers things."/>
+    <meta name="robots" content="index, follow"/>
+    <meta name="twitter:creator" content="@statico"/>
+    <meta property="og:url" content="https://statico.github.io/memorybot/"/>
+    <meta property="og:image" content="https://statico.github.io/memorybot/icon.png"/>
+    <meta property="og:title" content="memorybot"/>
+    <meta property="og:description" content="An infobot-inspired Slack bot that remembers things."/>
 
   </head>
   <body>
-
-  <a href="https://github.com/statico/memorybot"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/e7bbb0521b397edbd5fe43e7f760759336b5e05f/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677265656e5f3030373230302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png"></a>
 
     <div class="container">
 
@@ -31,25 +38,156 @@
       </div>
 
       <div class="row marketing">
-        <div class="col-lg-6">
-          <h4 class="center">It remembers things and recalls them later.</h4>
-          <p>
-          Saying <code>the sky is blue</code> assigns the definition<code>blue</code> to the subject <code>sky</code>.
-          </p>
+        <div class="col-lg-4">
+          <h4 class="center">It remembers things said in chat and recalls them later.</h4>
         </div>
-        <div class="col-lg-6">
-          <span class="you">The internet is a great place for cat pictures</span>
-          <span class="membot">Got it.</span>
-          <span class="you">What is the internet?</span>
-          <span class="membot">The internet is a great place for cat pictures</span>
+        <div class="col-lg-8">
+          <span class="you"><b>You</b> The internet is a great place for cat pictures</span>
+          <span class="you"><b>You</b> What is the internet?</span>
+          <span class="membot"><b>membot</b> The internet is a great place for cat pictures</span>
         </div>
       </div>
 
+      <div class="row marketing">
+        <div class="col-lg-4">
+          <h4 class="center">You can append to existing factoids.</h4>
+        </div>
+        <div class="col-lg-8">
+          <span class="you"><b>You</b> GIF is pronounced like "gift"</span>
+          <span class="you"><b>You</b> GIF is also pronounced like "jiffy"</span>
+          <span class="you"><b>You</b> GIF?</span>
+          <span class="membot"><b>membot</b> GIF is pronounced like "gift" or pronounced like "jiffy"</span>
+        </div>
+      </div>
+
+      <div class="row marketing">
+        <div class="col-lg-4">
+          <h4 class="center">You can replace existing factoids.</h4>
+        </div>
+        <div class="col-lg-8">
+          <span class="you"><b>You</b> no, GIF is pronounced however you want it to be!</span>
+          <span class="you"><b>You</b> GIF?</span>
+          <span class="membot"><b>membot</b> GIF is pronounced however you want it to be!</span>
+        </div>
+      </div>
+
+      <div class="row marketing">
+        <div class="col-lg-4">
+          <h4 class="center">You can forget factoids.</h4>
+        </div>
+        <div class="col-lg-8">
+          <span class="you"><b>You</b> forget gif</span>
+          <span class="membot"><b>membot</b> OK, I forgot gif</span>
+          <span class="you"><b>You</b> GIF?</span>
+          <span class="membot"><b>membot</b> I have no idea.</span>
+        </div>
+      </div>
+
+      <div class="row marketing">
+        <div class="col-lg-4">
+          <h4 class="center">You can ask it to tell people about things privately.</h4>
+        </div>
+        <div class="col-lg-8">
+          <span class="you"><b>You</b> tell Anne about he who must not be named</span>
+          <span class="membot"><b>membot</b> OK, I told Anne about he who must not be named</span>
+        </div>
+      </div>
+
+      <div class="row marketing">
+        <div class="col-lg-4">
+          <h4 class="center">You can make it choose a random response.</h4>
+        </div>
+        <div class="col-lg-8">
+          <span class="you"><b>You</b> Schrodinger's cat is very happy | not happy at all</span>
+          <span class="you"><b>You</b> Schrodinger's cat?</span>
+          <span class="membot"><b>membot</b> Schrodinger's cat is not happy at all</span>
+          <span class="you"><b>You</b> Schrodinger's cat?</span>
+          <span class="membot"><b>membot</b> Schrodinger's cat is very happy</span>
+        </div>
+      </div>
+
+      <div class="row marketing">
+        <div class="col-lg-4">
+          <h4 class="center">You can see what a factoid is literally.</h4>
+        </div>
+        <div class="col-lg-8">
+          <span class="you"><b>You</b> literal Schrodinger's cat</span>
+          <span class="membot"><b>membot</b> Schrodinger's cat is very happy | not happy at all</span>
+        </div>
+      </div>
+
+      <div class="row marketing">
+        <div class="col-lg-4">
+          <h4 class="center">You can make it reply with actions.</h4>
+        </div>
+        <div class="col-lg-8">
+          <span class="you"><b>You</b> licks membot is <reply> exudes a foul oil</span>
+          <span class="you"><b>You</b> /me licks membot</span>
+          <span class="membot"><b>membot</b> <em>exudes a foil oil</em></span>
+        </div>
+      </div>
+
+      <div class="row marketing">
+        <div class="col-lg-4">
+          <h4 class="center">You can express your like or dislike about things.</h4>
+        </div>
+        <div class="col-lg-8">
+          <span class="you"><b>You</b> kittens++</span>
+          <span class="you a"><b>Alice</b> kittens++ # so cute!</span>
+          <span class="you b"><b>Bob</b> kittens--</span>
+          <span class="you"><b>You</b> karma for kittens?</span>
+          <span class="membot"><b>membot</b> kittens has 1 karma</span>
+        </div>
+      </div>
+
+      <div class="row marketing">
+        <div class="col-lg-4">
+          <h4 class="center">You can make it require addressing to learn things.</h4>
+        </div>
+        <div class="col-lg-8">
+          <span class="you"><b>You</b> <span class="address">@membot</span> disable setting ambient</span>
+          <span class="membot"><b>membot</b> OK, I now require @-addressing or direct messing to learn things.</span>
+          <span class="you"><b>You</b> foo is bar</span>
+          <span class="you"><b>You</b> foo?</span>
+          <span class="membot"><b>membot</b> No idea.</span>
+        </div>
+      </div>
+
+      <div class="row marketing">
+        <div class="col-lg-4">
+          <h4 class="center">You can make it require addressing respond to things.</h4>
+        </div>
+        <div class="col-lg-8">
+          <span class="you"><b>You</b> <span class="address">@membot</span> enable setting direct</span>
+          <span class="membot"><b>membot</b> OK, I won't reply unless spoken to.</span>
+          <span class="you"><b>You</b> kittens?</span>
+          <span class="you a"><b>Alice</b> hmmm, nothing happened</span>
+          <span class="you"><b>You</b> <span class="address">@membot</span> kittens?</span>
+          <span class="membot"><b>membot</b> kittens are super cute</span>
+          <span class="you a"><b>Alice</b> membot what are kittens?</span>
+          <span class="membot"><b>membot</b> kittens are super cute</span>
+        </div>
+      </div>
+
+      <div class="text-center">
+        <p><a class="btn btn-lg btn-success" href="https://github.com/statico/memorybot#readme" role="button">Install it now</a></p>
+      </div>
+
       <footer class="footer">
-        <p>&copy; 2017</p>
+        <p class="text-center">
+          <a href="http://infobot.org/">infobot</a> is a project by kevin lenzo.
+          <br/>
+          <a href="https://www.iconfinder.com/icons/385841/">Fun android icon</a> by <a href="https://www.iconfinder.com/graphiqa">Graphiqa Stock</a>.
+          <br/>
+          <a href="https://github.com/statico/memorybot">memorybot</a> is a project by <a href="https://github.com/statico">Ian Langworth</a>.
+        </p>
       </footer>
 
+    </div>
+
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+
+    <a href="https://github.com/statico/memorybot"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/e7bbb0521b397edbd5fe43e7f760759336b5e05f/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677265656e5f3030373230302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png"></a>
 
   </body>
 </html>

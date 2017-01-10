@@ -5,8 +5,8 @@
   "author": "Ian Langworth <ian@langworth.com>",
   "license": "MIT",
   "scripts": {
-    "run": "coffee server.coffee",
-    "run-dev": "nodemon -e coffee,js -x coffee server.coffee"
+    "server": "coffee server.coffee",
+    "dev": "nodemon -e coffee,js -x coffee server.coffee"
   },
   "dependencies": {
     "artillery-async": "1.0.2",

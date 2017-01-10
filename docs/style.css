@@ -77,3 +77,31 @@ body {
     border-bottom: 0;
   }
 }
+
+/* Memorybot styles */
+body {
+  font-family: 'Lato', -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+span.you, span.membot {
+  display: block;
+  padding-left: 1em;
+  text-indent: -1em;
+}
+span.you b, span.membot b {
+  margin-right: 0.5em;
+}
+span.you b {
+  color: #8e44ad;
+}
+span.you.a b {
+  color: #d35400;
+}
+span.you.b b {
+  color: #2980b9;
+}
+span.membot b {
+  color: #16a085;
+}
+span.address {
+  color: #3498db;
+}

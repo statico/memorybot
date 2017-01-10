@@ -202,7 +202,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
         log.error err
         if isVerbose then reply "There was an error getting the karma. Please try again."
       else
-        reply "Karma for #{key} is #{current}"
+        reply "#{key} has #{current} karma"
       return
     return
 
