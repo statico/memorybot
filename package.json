@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "description": "A Slack bot that remembers things",
-  "main": "index.js",
   "author": "Ian Langworth <ian@langworth.com>",
-  "license": "ISC",
+  "license": "MIT",
+  "scripts": {
+    "run": "coffee server.coffee",
+    "run-dev": "nodemon -e coffee,js -x coffee server.coffee"
+  },
   "dependencies": {
     "artillery-async": "1.0.2",
     "body-parser": "1.15.2",
@@ -16,9 +19,7 @@
     "graceful-fs": "4.1.11",
     "html-entities": "1.2.0",
     "passport": "0.3.2",
-    "passport-oauth": "1.0.0",
     "passport-slack": "github:statico/passport-slack",
-    "slackbots": "1.0.2",
     "sqlite3": "3.1.8",
     "winston": "2.3.0"
   }
