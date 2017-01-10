@@ -6,7 +6,7 @@ require('dotenv').config()
 
 Botkit = require 'botkit'
 Entities = require('html-entities').AllHtmlEntities
-SlackStrategy = require('./lib/passport-slack.js')
+SlackStrategy = require 'passport-slack'
 async = require 'artillery-async'
 bodyParser = require 'body-parser'
 express = require 'express'
@@ -22,16 +22,6 @@ app = express()
 log = winston
 log.remove(winston.transports.Console);
 log.add(winston.transports.Console, {'timestamp':true});
-
-PLANS =
-  free:
-    planType: 'free'
-    maxFactoidSize: 250
-    maxFactoids: 150
-  paid:
-    planType: 'paid'
-    maxFactoidSize: 2048
-    maxFactoids: Infinity
 
 I_DONT_KNOW = [
   "I don't know what that is."
@@ -107,7 +97,6 @@ setMetaData = (team, key, value, cb) ->
         (cb) -> db.run "INSERT INTO metadata VALUES('direct', 'no')", cb
         (cb) -> db.run "INSERT INTO metadata VALUES('ambient', 'yes')", cb
         (cb) -> db.run "INSERT INTO metadata VALUES('verbose', 'no')", cb
-        (cb) -> db.run "INSERT INTO metadata VALUES('plan', 'free')", cb
       ], (err) ->
         if err then return cb "Couldn't initialize metadata for team #{team}: #{err}"
         log.info "Set metadata key #{key} for team #{team} with new table"
@@ -132,10 +121,6 @@ updateBotMetadata = (bot, team, cb) ->
         bot.mbMeta[key] = false
       else
         bot.mbMeta[key] = value
-
-    plan = bot.mbMeta.plan or 'free'
-    for key, value of PLANS[plan]
-      bot.mbMeta[key] = value
 
     return cb null
 
@@ -308,7 +293,6 @@ _handleMessage = (bot, sender, channel, isDirect, msg) ->
       reply "#{key} is #{value}"
 
   update = (key, value) ->
-    # TODO: Use plan limits
     lastEdit = "on #{new Date()} by #{sender}"
     setFactoid team, key, value, lastEdit, (err) ->
       if err
@@ -326,10 +310,7 @@ _handleMessage = (bot, sender, channel, isDirect, msg) ->
       log.error err if err
       reply """
         *Usage*
-        You are on the #{mbMeta.planType} paid plan.
-        You are using #{count}/#{mbMeta.maxFactoids} factoids.
-        Maximum factoid size is #{mbMeta.maxFactoidSize} characters.
-        More info: TODO
+        I am currently remembering #{count} factoids.
         *Settings*
         #{bool mbMeta.direct} `direct` - Interactons require direct messages or @-mentions
         #{bool mbMeta.ambient} `ambient` - Learn factoids from ambient room chatter
