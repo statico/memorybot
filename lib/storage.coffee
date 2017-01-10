@@ -15,6 +15,9 @@ initDatabase = (team, cb) ->
     (cb) -> db.run "INSERT INTO metadata VALUES('direct', 'no')", cb
     (cb) -> db.run "INSERT INTO metadata VALUES('ambient', 'yes')", cb
     (cb) -> db.run "INSERT INTO metadata VALUES('verbose', 'no')", cb
+    (cb) -> db.run "INSERT INTO factoids VALUES('slack', 'a cool way to talk to your team', 'by nobody')", cb
+    (cb) -> db.run "INSERT INTO factoids VALUES('internet', 'a great source of cat pictures', 'by nobody')", cb
+    (cb) -> db.run "INSERT INTO factoids VALUES('lick the bot', '<action>exudes a foul oil, 'by nobody'')", cb
   ], cb
 
 getDatabase = (team) ->

@@ -7,13 +7,21 @@ storage = require './storage.coffee'
 
 log = winston
 
-MAX_FACTOID_SIZE = 2048
+MAX_FACTOID_SIZE = Number(process.env.MAX_FACTOID_SIZE or 2048)
 
 I_DONT_KNOW = [
   "I don't know what that is."
   "I have no idea."
   "No idea."
   "I don't know."
+]
+
+OKAY = [
+  "OK, got it."
+  "I got it."
+  "Understood."
+  "Gotcha."
+  "OK"
 ]
 
 oneOf = ->
@@ -66,7 +74,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
         log.error err
         if isVerbose then reply "There was an error updating that factoid. Please try again."
       else
-        if isVerbose then reply "OK, #{key} is now #{value}"
+        if isVerbose then reply oneOf OKAY
       return
     return
 

@@ -1,8 +1,7 @@
 {
   "name": "memorybot",
   "version": "1.0.0",
-  "private": true,
-  "description": "A Slack bot that remembers things",
+  "description": "An infobot-inspired Slack bot that remembers things",
   "author": "Ian Langworth <ian@langworth.com>",
   "license": "MIT",
   "scripts": {
