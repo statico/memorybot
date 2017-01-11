@@ -40,9 +40,9 @@ controller.on 'direct_message', (bot, msg) ->
 
 controller.on 'ambient', (bot, msg) ->
   return if msg.user is bot.identity?.id
-  name = bot.identity?.name
+  name = bot.identity?.name.toLowerCase()
   text = msg.text
-  if text.toLowerCase().indexOf("#{ name } ") == 0
+  if text.toLowerCase().indexOf("#{name} ") == 0 or text.toLowerCase().indexOf("#{name}: ") == 0
     # Sometimes users might say "membot" instead of "@membot"
     text = text.substr(name.length + 1).replace(/^:\s+/, '')
     handleMessage bot, msg.user, msg.channel, true, text

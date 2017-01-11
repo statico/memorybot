@@ -24,6 +24,20 @@ OKAY = [
   "OK"
 ]
 
+GREETINGS = [
+  "Heya, $who!"
+  "Hi $who!"
+  "Hello, $who"
+  "Hello, $who!"
+  "Greetings, $who"
+]
+
+ACKNOWLEDGEMENTS = [
+  "Yes?"
+  "Yep?"
+  "Yeah?"
+]
+
 oneOf = ->
   if Array.isArray arguments[0]
     arr = arguments[0]
@@ -94,9 +108,18 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
       """
     return
 
+  # A greeting?
+  else if (/^(hey|hi|hello|waves)$/i).test(msg)
+    if shouldReply or isVerbose
+      reply oneOf(GREETINGS).replace(/\$who/ig, sender)
+
+  # Addressing the bot?
+  else if msg.toLowerCase() == "#{bot.identity?.name.toLowerCase()}?"
+    reply oneOf ACKNOWLEDGEMENTS
+
   # Getting literal factoids
   else if shouldReply and (/^literal\s+/i).test(msg)
-    key = msg.replace(/^literal\s+/i, '')
+    key = msg.replace(/^literal\s+/i, '').replace(/^the\s+/i, '')
     storage.getFactoid team, key, (err, current) ->
       if current?
         reply "#{key} is #{current}"
@@ -152,6 +175,17 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
 
     return
 
+  # Deleting factoids
+  else if isDirect and (/^forget\s+/i).test(msg)
+    key = msg.replace(/^forget\s+/i, '').replace(/^the\s+/i, '')
+    storage.deleteFactoid team, key, (err) ->
+      if err
+        log.error err
+        reply "There was an error while downloading the list of users. Please try again."
+      else
+        reply "OK, I forgot about #{key}"
+    return
+
   # Tell users about things
   else if (/^tell\s+\S+\s+about\s+/i).test(msg)
     bot.api.users.list {}, (err, res) ->
@@ -162,7 +196,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
 
       msg = msg.replace(/^tell\s+/i, '')
       [targetName, parts...] = msg.split(/\s*about\s*/i)
-      key = parts.join(' ')
+      key = parts.join(' ').replace(/^the\s+/i, '')
 
       targetID = null
       for {id, name} in res.members
@@ -195,7 +229,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
 
   # Karma query
   else if (/^karma\s+for\s+/i).test(msg)
-    key = msg.replace(/^karma\s+for\s+/i, '').replace(/\?+$/, '')
+    key = msg.replace(/^karma\s+for\s+/i, '').replace(/\?+$/, '').replace(/^the\s+/i, '')
     storage.getKarma team, key, (err, current) ->
       current or= 0
       if err
@@ -209,7 +243,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
   # Karma increment/decrement
   else if /\+\+(\s#.+)?$/.test(msg)
     if isDirect then return reply "You cannot secretly change the karma for something!"
-    key = msg.split(/\+\+/)[0]
+    key = msg.split(/\+\+/)[0].replace(/^the\s+/i, '')
     storage.getKarma team, key, (err, current) ->
       if err then return log.error(err)
       value = Number(current or 0)
@@ -225,7 +259,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
   # Karma decrement
   else if /\-\-(\s#.+)?$/.test(msg)
     if isDirect then return reply "You cannot secretly change the karma for something!"
-    key = msg.split(/\-\-/)[0]
+    key = msg.split(/\-\-/)[0].replace(/^the\s+/i, '')
     storage.getKarma team, key, (err, current) ->
       if err then return log.error(err)
       value = Number(current or 0)
@@ -238,8 +272,9 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
       return
     return
 
-  # Getting regular factoids, last chance {{{3
+  # Getting regular factoids, last chance
   else
+    msg = msg.replace(/^the\s+/i, '')
     storage.getFactoid team, msg, (err, value) ->
       if value?
         parseAndReply msg, value

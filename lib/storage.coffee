@@ -23,7 +23,7 @@ initDatabase = (team, cb) ->
         (cb) -> db.run "INSERT INTO metadata VALUES('verbose', 'no')", cb
         (cb) -> db.run "INSERT INTO factoids VALUES('Slack', 'a cool way to talk to your team', 'by nobody')", cb
         (cb) -> db.run "INSERT INTO factoids VALUES('internet', 'a great source of cat pictures', 'by nobody')", cb
-        (cb) -> db.run "INSERT INTO factoids VALUES('licks the bot', '<action>exudes a foul oil', 'by nobody'')", cb
+        (cb) -> db.run "INSERT INTO factoids VALUES('licks the bot', '<action>exudes a foul oil', 'by nobody')", cb
         (cb) -> db.run "INSERT INTO karma VALUES('memorybot', 42)", cb
       ], (err) ->
         if err
@@ -105,6 +105,16 @@ setFactoid = (team, key, value, lastEdit, cb) ->
     log.info "Set factoid key #{key} for team #{team}"
     return cb null
 
+deleteFactoid = (team, key, cb) ->
+  debug "deleting factoid #{JSON.stringify key}"
+  db = getDatabase team
+  if not db? then return cb "Couldn't get database for team #{team}"
+
+  db.run "DELETE FROM factoids WHERE key = $key", {$key: key}, (err) ->
+    if err then return cb "Couldn't delete factoid for team #{team}: #{err}"
+    log.info "Deleted factoid key #{key} for team #{team}"
+    return cb null
+
 getKarma = (team, key, cb) ->
   debug "getting karma #{JSON.stringify key}"
   db = getDatabase team
@@ -131,5 +141,6 @@ exports.updateBotMetadata = updateBotMetadata
 exports.countFactoids = countFactoids
 exports.getFactoid = getFactoid
 exports.setFactoid = setFactoid
+exports.deleteFactoid = deleteFactoid
 exports.getKarma = getKarma
 exports.setKarma = setKarma
