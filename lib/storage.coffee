@@ -46,12 +46,23 @@ getMetaData = (team, key, cb) ->
 
   db.get "SELECT value FROM metadata WHERE key = $key", {$key: key}, (err, row) ->
     if err then return cb "Couldn't get metadata for team #{team}: #{err}"
-    return cb null, row.value
+    {value} = row
+    if value is 'yes'
+      cb null, true
+    else if value is 'no'
+      cb null, false
+    else
+      cb null, value
 
 setMetaData = (team, key, value, cb) ->
   debug "setting metadata #{JSON.stringify key} to #{JSON.stringify value}"
   db = getDatabase team
   if not db? then return cb "Couldn't get database for team #{team}"
+
+  if value is true
+    value = 'yes'
+  else if value is false
+    value = 'no'
 
   db.run "INSERT OR REPLACE INTO metadata VALUES($key, $value)", {$key: key, $value: value}, (err) ->
     if err then return cb "Couldn't update metadata for team #{team}: #{err}"
@@ -70,7 +81,7 @@ updateBotMetadata = (bot, cb) ->
     for {key, value} in rows
       if value is 'yes'
         bot.mbMeta[key] = true
-      if value is 'no'
+      else if value is 'no'
         bot.mbMeta[key] = false
       else
         bot.mbMeta[key] = value

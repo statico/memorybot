@@ -1,6 +1,7 @@
 #!/usr/bin/env coffee
 
 Entities = require('html-entities').AllHtmlEntities
+async = require 'artillery-async'
 winston = require 'winston'
 
 storage = require './storage.coffee'
@@ -108,6 +109,28 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
       """
     return
 
+  # Settings
+  else if isDirect and (/^(enable|disable)\s+setting\s+/i).test(msg)
+    [action, key] = msg.split(/\s+setting\s+/i)
+    value = action is 'enable'
+    switch key
+      when 'direct'
+        result = "interactions with me #{if value then 'now' else 'no longer'} require direct messages or @-mentions"
+      when 'ambient'
+        result = "I #{if value then 'will now' else 'will no longer'} learn factoids without being told explicitly"
+      when 'verbose'
+        result = "I #{if value then 'will now' else 'will no longer'} be extra chatty"
+    async.series [
+      (cb) -> storage.setMetaData team, key, value, cb
+      (cb) -> storage.updateBotMetadata bot, cb
+    ], (err) ->
+      if err
+        log.error err
+        reply "There was an error updating that setting. Please try again."
+      else
+        reply "OK, #{result}."
+    return
+
   # A greeting?
   else if (/^(hey|hi|hello|waves)$/i).test(msg)
     if shouldReply or isVerbose
@@ -158,7 +181,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
         update key, value
 
       else if current and isAppending
-        if /^|/.test value
+        if /^\|/.test value
           value = "#{current}#{value}"
         else
           value = "#{current} or #{value}"
