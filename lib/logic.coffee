@@ -66,8 +66,8 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
     isReply = (/^<reply>\s*/i).test(value)
     value = value.replace(/^<reply>\s*/i, '') if isReply
 
-    isEmote = (/^<action>\s+/i).test(value)
-    value = value.replace(/^<action>\s+/i, '') if isEmote
+    isEmote = (/^<action>\s*/i).test(value)
+    value = value.replace(/^<action>\s*/i, '') if isEmote
 
     value = value.replace(/\$who/ig, sender)
 

@@ -38,6 +38,9 @@ controller.on 'direct_message', (bot, msg) ->
   return if msg.user is bot.identity?.id
   handleMessage bot, msg.user, msg.channel, true, msg.text
 
+controller.on 'me_message', (bot, msg) ->
+  handleMessage bot, msg.user, msg.channel, false, msg.text
+
 controller.on 'ambient', (bot, msg) ->
   return if msg.user is bot.identity?.id
   name = bot.identity?.name.toLowerCase()
