@@ -49,6 +49,8 @@ IGNORED_FACTOIDS = [
   "that"
 ]
 
+userIdsToNames = {}
+
 oneOf = ->
   if Array.isArray arguments[0]
     arr = arguments[0]
