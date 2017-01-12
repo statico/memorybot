@@ -14,16 +14,28 @@ You will have to host and run memorybot yourself. There is no "Add to Slack" but
 
 1. Go to [https://my.slack.com/services/new/bot](https://my.slack.com/services/new/bot)
 1. Give it a nice name, like `@membot`
-1. Give it an icon. Check out the [free Robots Expression icons](https://www.iconfinder.com/iconsets/robots-expression) by Graphiqa Stock.
+1. Maybe give it an icon. Check out the [free Robots Expression icons](https://www.iconfinder.com/iconsets/robots-expression) by Graphiqa Stock.
 1. Save the API token for later. It should begin with `xoxb-`.
 
 ### 2a. Run memorybot with Docker
 
-TODO
+```
+$ mkdir /path/to/data
+$ docker run --name memorybot -v /path/to/data:/data -e SLACK_TOKEN=xoxb-xxxxx statico/memorybot
+````
 
 ### 2b. Run memorybot as a standalone application
 
-TODO
+```
+$ mkdir data
+$ npm install
+$ echo "SLACK_TOKEN=xob-xxxxx" >.env
+$ npm run -s start
+```
+
+## Feature requests & bugs?
+
+Please [file a GitHub issue](https://github.com/statico/memorybot/issues) or [create a Pull Request](https://github.com/statico/memorybot/pulls).
 
 ## Credits
 
