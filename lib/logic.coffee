@@ -117,7 +117,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
         log.error err
         if isVerbose then reply "There was an error updating that factoid. Please try again."
       else
-        if isVerbose then reply oneOf OKAY
+        if isVerbose or isDirect then reply oneOf OKAY
       return
     return
 
