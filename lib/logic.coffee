@@ -47,6 +47,11 @@ IGNORED_FACTOIDS = [
   "these"
   "they"
   "that"
+  "who"
+  "what"
+  "where"
+  "when"
+  "why"
 ]
 
 userIdsToNames = {}
