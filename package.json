@@ -4,9 +4,14 @@
   "description": "An infobot-inspired Slack bot that remembers things",
   "author": "Ian Langworth <ian@langworth.com>",
   "license": "MIT",
-  "scripts": {
-    "server": "coffee server.coffee",
-    "dev": "nodemon -e coffee,js -x coffee server.coffee"
+  "keywords": [
+    "slack",
+    "bot",
+    "infobot"
+  ],
+  "directories": {
+    "doc": "docs",
+    "lib": "lib"
   },
   "dependencies": {
     "artillery-async": "1.0.2",
@@ -17,5 +22,17 @@
     "html-entities": "1.2.0",
     "sqlite3": "3.1.8",
     "winston": "2.3.0"
-  }
+  },
+  "scripts": {
+    "start": "coffee server.coffee",
+    "dev": "nodemon -e coffee,js -x coffee server.coffee"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/statico/memorybot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/statico/memorybot/issues"
+  },
+  "homepage": "https://statico.github.io/memorybot/"
 }

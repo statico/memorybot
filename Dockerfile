@@ -6,12 +6,16 @@ ENV NODE_VERSION 6.9.4
 ADD https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.gz /node.tar.gz
 RUN tar -xzf /node.tar.gz -C /usr/local --strip-components=1 && rm /node.tar.gz
 
-COPY package.json ./
-RUN npm install --silent
+RUN mkdir /memorybot
+WORKDIR /memorybot
 
-COPY lib/ server.coffee ./
+COPY package.json ./
+RUN npm install
+
+COPY lib/ ./lib/
+COPY server.coffee  ./
 
 ENV DATA_DIR /data
 VOLUME /data
 
-CMD ["npm", "run", "-s", "server.coffee"]
+CMD ["npm", "run", "-s", "start"]
