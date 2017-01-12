@@ -8,7 +8,7 @@ Check out the documentation on [https://statico.github.io/memorybot/](https://st
 
 ## How to install it
 
-You will have to host and run memorybot yourself. There is no "Add to Slack" button because hosting bots costs money. Also, memorybot needs to listen to all of the chat messages on rooms you invite it to, so you probably don't want to send your Slack team's chat messages to some random server you don't trust.
+You will have to host and run memorybot yourself. There is no "Add to Slack" button because hosting bots costs money. Also, memorybot needs to listen to all of the chat messages on rooms you invite it to, so you probably don't want to send your Slack team's chat messages to some random server that you don't trust.
 
 ### 1. Create a new bot integration for your team
 
