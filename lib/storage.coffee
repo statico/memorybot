@@ -104,7 +104,12 @@ getFactoid = (team, key, cb) ->
 
   db.get "SELECT value FROM factoids WHERE key = $key", {$key: key}, (err, row) ->
     if err then return cb "Couldn't get factoid for team #{team}: #{err}"
-    return cb null, row?.value or null
+    if row?.value
+      return cb null, row.value
+    else
+      db.get "SELECT value FROM factoids WHERE key = $key", {$key: "the #{key}"}, (err, row) ->
+        if err then return cb "Couldn't get factoid for team #{team}: #{err}"
+        return cb null, row?.value or null
 
 setFactoid = (team, key, value, lastEdit, cb) ->
   debug "setting factoid #{JSON.stringify key} to #{JSON.stringify value}"

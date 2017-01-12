@@ -156,7 +156,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
 
   # Getting literal factoids
   else if shouldReply and (/^literal\s+/i).test(msg)
-    key = msg.replace(/^literal\s+/i, '').replace(/^the\s+/i, '')
+    key = msg.replace(/^literal\s+/i, '')
     storage.getFactoid team, key, (err, current) ->
       if current?
         reply "#{key} #{current}"
@@ -166,7 +166,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
 
   # Getting regular factoids
   else if shouldReply and ((/^wh?at\s+(is|are)\s+/i).test(msg) or /\?+$/.test(msg))
-    key = msg.replace(/^wh?at\s+(is|are)\s+/i, '').replace(/\?+$/, '').replace(/^the\s+/i, '')
+    key = msg.replace(/^wh?at\s+(is|are)\s+/i, '').replace(/\?+$/, '')
     return if key.toLowerCase() in IGNORED_FACTOIDS
     storage.getFactoid team, key, (err, current) ->
       if not current?
@@ -218,7 +218,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
 
   # Deleting factoids
   else if isDirect and (/^forget\s+/i).test(msg)
-    key = msg.replace(/^forget\s+/i, '').replace(/^the\s+/i, '')
+    key = msg.replace(/^forget\s+/i, '')
     storage.deleteFactoid team, key, (err) ->
       if err
         log.error err
@@ -237,7 +237,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
 
       msg = msg.replace(/^tell\s+/i, '')
       [targetName, parts...] = msg.split(/\s*about\s*/i)
-      key = parts.join(' ').replace(/^the\s+/i, '')
+      key = parts.join(' ')
 
       targetID = null
       for {id, name} in res.members
@@ -270,7 +270,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
 
   # Karma query
   else if (/^karma\s+for\s+/i).test(msg)
-    key = msg.replace(/^karma\s+for\s+/i, '').replace(/\?+$/, '').replace(/^the\s+/i, '')
+    key = msg.replace(/^karma\s+for\s+/i, '').replace(/\?+$/, '')
     storage.getKarma team, key, (err, current) ->
       current or= 0
       if err
@@ -284,7 +284,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
   # Karma increment/decrement
   else if /\+\+(\s#.+)?$/.test(msg)
     if isDirect then return reply "You cannot secretly change the karma for something!"
-    key = msg.split(/\+\+/)[0].replace(/^the\s+/i, '')
+    key = msg.split(/\+\+/)[0]
     storage.getKarma team, key, (err, current) ->
       if err then return log.error(err)
       value = Number(current or 0)
@@ -300,7 +300,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
   # Karma decrement
   else if /\-\-(\s#.+)?$/.test(msg)
     if isDirect then return reply "You cannot secretly change the karma for something!"
-    key = msg.split(/\-\-/)[0].replace(/^the\s+/i, '')
+    key = msg.split(/\-\-/)[0]
     storage.getKarma team, key, (err, current) ->
       if err then return log.error(err)
       value = Number(current or 0)
@@ -315,7 +315,6 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
 
   # Getting regular factoids, last chance
   else
-    msg = msg.replace(/^the\s+/i, '')
     return if msg.toLowerCase() in IGNORED_FACTOIDS
     storage.getFactoid team, msg, (err, value) ->
       if value?
