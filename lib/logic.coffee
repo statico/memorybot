@@ -60,6 +60,9 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
   reply = (text) -> bot.reply {channel: channel}, {text: text}
 
   parseAndReply = (key, value, tell=null) ->
+    [_, verb, rest] = value.match(/^(is|are)\s+(.*)/i)
+    value = rest
+
     value = value.replace(/\\\|/g, '\\&#124;')
     value = oneOf(value.split(/\|/i)).trim()
     value = value.replace(/&#124;/g, '|')
@@ -80,7 +83,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
       bot.api.callAPI 'chat.meMessage', {channel: channel, text: value}, (err, res) ->
         log.error(err) if err
     else
-      reply "#{key} is #{value}"
+      reply "#{key} #{verb} #{value}"
 
   update = (key, value) ->
     lastEdit = "on #{new Date()} by #{sender}"
@@ -145,14 +148,14 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
     key = msg.replace(/^literal\s+/i, '').replace(/^the\s+/i, '')
     storage.getFactoid team, key, (err, current) ->
       if current?
-        reply "#{key} is #{current}"
+        reply "#{key} #{current}"
       else
         reply oneOf I_DONT_KNOW
     return
 
   # Getting regular factoids
-  else if shouldReply and ((/^wh?at\s+is\s+/i).test(msg) or /\?+$/.test(msg))
-    key = msg.replace(/^wh?at\s+is\s+/i, '').replace(/\?+$/, '').replace(/^the\s+/i, '')
+  else if shouldReply and ((/^wh?at\s+(is|are)\s+/i).test(msg) or /\?+$/.test(msg))
+    key = msg.replace(/^wh?at\s+(is|are)\s+/i, '').replace(/\?+$/, '').replace(/^the\s+/i, '')
     storage.getFactoid team, key, (err, current) ->
       if not current?
         reply oneOf I_DONT_KNOW
@@ -161,9 +164,10 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
     return
 
   # Updating factoids
-  else if shouldLearn and (/\s+is\s+/i).test(msg)
-    [key, value] = msg.split /\s+is\s+/i
+  else if shouldLearn and (/\s+(is|are)\s+/i).test(msg)
+    [_, key, verb, value] = msg.match /^(.+?)\s+(is|are)\s+(.*)/i
     key = key.toLowerCase()
+    verb = verb.toLowerCase()
 
     isCorrecting = (/no,?\s+/i).test(key)
     key = key.replace(/no,?\s+/i, '') if isCorrecting
@@ -178,7 +182,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
       if err then return log.error(err)
 
       if current and isCorrecting
-        update key, value
+        update key, "#{verb} #{value}"
 
       else if current and isAppending
         if /^\|/.test value
@@ -191,10 +195,10 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
         reply oneOf "I already know that.", "I've already got it as that."
 
       else if current
-        reply "But #{key} is already #{current}"
+        reply "But #{key} #{verb} already #{current}"
 
       else
-        update key, value
+        update key, "#{verb} #{value}"
 
     return
 
