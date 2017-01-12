@@ -191,48 +191,6 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
         parseAndReply key, current
     return
 
-  # Updating factoids
-  else if shouldLearn and (/\s+(is|are)\s+/i).test(msg)
-    [_, key, verb, value] = msg.match /^(.+?)\s+(is|are)\s+(.*)/i
-    key = key.toLowerCase()
-    verb = verb.toLowerCase()
-
-    return if key in IGNORED_FACTOIDS
-
-    isCorrecting = (/no,?\s+/i).test(key)
-    key = key.replace(/no,?\s+/i, '') if isCorrecting
-
-    isAppending = (/also,?\s+/i).test(key)
-    key = key.replace(/also,?\s+/i, '') if isAppending
-
-    isAppending or= (/also,?\s+/i).test(value)
-    value = value.replace(/also,?\s+/i, '') if isAppending
-
-    storage.getFactoid team, key, (err, current) ->
-      if err then return log.error(err)
-
-      if current and isCorrecting
-        update key, "#{verb} #{value}"
-
-      else if current and isAppending
-        if /^\|/.test value
-          value = "#{current}#{value}"
-        else
-          value = "#{current} or #{value}"
-        update key, value
-
-      else if current == value
-        reply oneOf "I already know that.", "I've already got it as that."
-
-      else if current
-        current = current.replace(/^(is|are)\s+/i, '')
-        reply "But #{key} #{verb} already #{current}"
-
-      else
-        update key, "#{verb} #{value}"
-
-    return
-
   # Deleting factoids
   else if isDirect and (/^forget\s+/i).test(msg)
     key = msg.replace(/^forget\s+/i, '')
@@ -328,6 +286,48 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
           if isVerbose then reply "There was an error changing the karma. Please try again."
         return
       return
+    return
+
+  # Updating factoids
+  else if shouldLearn and (/\s+(is|are)\s+/i).test(msg)
+    [_, key, verb, value] = msg.match /^(.+?)\s+(is|are)\s+(.*)/i
+    key = key.toLowerCase()
+    verb = verb.toLowerCase()
+
+    return if key in IGNORED_FACTOIDS
+
+    isCorrecting = (/no,?\s+/i).test(key)
+    key = key.replace(/no,?\s+/i, '') if isCorrecting
+
+    isAppending = (/also,?\s+/i).test(key)
+    key = key.replace(/also,?\s+/i, '') if isAppending
+
+    isAppending or= (/also,?\s+/i).test(value)
+    value = value.replace(/also,?\s+/i, '') if isAppending
+
+    storage.getFactoid team, key, (err, current) ->
+      if err then return log.error(err)
+
+      if current and isCorrecting
+        update key, "#{verb} #{value}"
+
+      else if current and isAppending
+        if /^\|/.test value
+          value = "#{current}#{value}"
+        else
+          value = "#{current} or #{value}"
+        update key, value
+
+      else if current == value
+        reply oneOf "I already know that.", "I've already got it as that."
+
+      else if current
+        current = current.replace(/^(is|are)\s+/i, '')
+        reply "But #{key} #{verb} already #{current}"
+
+      else
+        update key, "#{verb} #{value}"
+
     return
 
   # Getting regular factoids, last chance
