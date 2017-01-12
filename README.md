@@ -13,7 +13,7 @@ You will have to host and run memorybot yourself. There is no "Add to Slack" but
 ### 1. Create a new bot integration for your team
 
 1. Go to [https://my.slack.com/services/new/bot](https://my.slack.com/services/new/bot)
-1. Give it a nice name, like `@membot`
+1. Give it a nice name, like `@membot` or `@bender` or `@hal9000` or `@glados`
 1. Maybe give it an icon. Check out the [free Robots Expression icons](https://www.iconfinder.com/iconsets/robots-expression) by Graphiqa Stock.
 1. Save the API token for later. It should begin with `xoxb-`.
 
