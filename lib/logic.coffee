@@ -42,15 +42,23 @@ ACKNOWLEDGEMENTS = [
 ]
 
 IGNORED_FACTOIDS = [
-  "this"
-  "those"
+  "he"
+  "hers"
+  "his"
+  "it"
+  "it's"
+  "its"
+  "she"
+  "that"
+  "them"
   "these"
   "they"
-  "that"
-  "who"
+  "this"
+  "those"
   "what"
-  "where"
   "when"
+  "where"
+  "who"
   "why"
 ]
 
