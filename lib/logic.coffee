@@ -39,6 +39,14 @@ ACKNOWLEDGEMENTS = [
   "Yeah?"
 ]
 
+IGNORED_FACTOIDS = [
+  "this"
+  "those"
+  "these"
+  "they"
+  "that"
+]
+
 oneOf = ->
   if Array.isArray arguments[0]
     arr = arguments[0]
@@ -156,6 +164,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
   # Getting regular factoids
   else if shouldReply and ((/^wh?at\s+(is|are)\s+/i).test(msg) or /\?+$/.test(msg))
     key = msg.replace(/^wh?at\s+(is|are)\s+/i, '').replace(/\?+$/, '').replace(/^the\s+/i, '')
+    return if key.toLowerCase() in IGNORED_FACTOIDS
     storage.getFactoid team, key, (err, current) ->
       if not current?
         reply oneOf I_DONT_KNOW
@@ -168,6 +177,8 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
     [_, key, verb, value] = msg.match /^(.+?)\s+(is|are)\s+(.*)/i
     key = key.toLowerCase()
     verb = verb.toLowerCase()
+
+    return if key in IGNORED_FACTOIDS
 
     isCorrecting = (/no,?\s+/i).test(key)
     key = key.replace(/no,?\s+/i, '') if isCorrecting
@@ -302,6 +313,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
   # Getting regular factoids, last chance
   else
     msg = msg.replace(/^the\s+/i, '')
+    return if msg.toLowerCase() in IGNORED_FACTOIDS
     storage.getFactoid team, msg, (err, value) ->
       if value?
         parseAndReply msg, value
