@@ -1,6 +1,6 @@
 {
   "name": "memorybot",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "An infobot-inspired Slack bot that remembers things",
   "author": "Ian Langworth <ian@langworth.com>",
   "license": "MIT",
