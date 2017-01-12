@@ -29,7 +29,8 @@ $ docker run --name memorybot -v /path/to/data:/data -e SLACK_TOKEN=xoxb-xxxxx s
 ```
 $ mkdir data
 $ npm install
-$ echo "SLACK_TOKEN=xob-xxxxx" >.env
+$ echo "SLACK_TOKEN=xob-xxxxx" >>.env
+$ echo "DATA_DIR=data" >>.env
 $ npm run -s start
 ```
 
