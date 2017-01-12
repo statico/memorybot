@@ -113,7 +113,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
       log.error err if err
       reply """
         *Status*
-        I am memorybot v#{VERSION}
+        I am memorybot v#{VERSION} - https://statico.github.com/memorybot/
         I am currently remembering #{count} factoids.
         *Settings*
         #{bool mbMeta.direct} `direct` - Interactons require direct messages or @-mentions
