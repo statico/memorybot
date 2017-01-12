@@ -165,7 +165,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
     return
 
   # Getting regular factoids
-  else if shouldReply and ((/^wh?at\s+(is|are)\s+/i).test(msg) or /\?+$/.test(msg))
+  else if shouldReply and (/^wh?at\s+(is|are)\s+/i).test(msg)
     key = msg.replace(/^wh?at\s+(is|are)\s+/i, '').replace(/\?+$/, '')
     return if key.toLowerCase() in IGNORED_FACTOIDS
     storage.getFactoid team, key, (err, current) ->
@@ -173,6 +173,15 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
         reply oneOf I_DONT_KNOW
         return
       parseAndReply key, current
+    return
+
+  # Getting factoids without an interrogative requires addressing
+  else if shouldReply and /\?+$/.test(msg)
+    key = msg.replace(/\?+$/, '')
+    return if key.toLowerCase() in IGNORED_FACTOIDS
+    storage.getFactoid team, key, (err, current) ->
+      if current?
+        parseAndReply key, current
     return
 
   # Updating factoids
@@ -209,6 +218,7 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
         reply oneOf "I already know that.", "I've already got it as that."
 
       else if current
+        current = current.replace(/^(is|are)\s+/i, '')
         reply "But #{key} #{verb} already #{current}"
 
       else
