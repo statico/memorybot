@@ -8,6 +8,8 @@ storage = require './storage.coffee'
 
 log = winston
 
+VERSION = require('../package.json').version
+
 MAX_FACTOID_SIZE = Number(process.env.MAX_FACTOID_SIZE or 2048)
 
 I_DONT_KNOW = [
@@ -110,7 +112,8 @@ exports.handleMessage = (bot, sender, channel, isDirect, msg) ->
     storage.countFactoids team, (err, count) ->
       log.error err if err
       reply """
-        *Usage*
+        *Status*
+        I am memorybot v#{VERSION}
         I am currently remembering #{count} factoids.
         *Settings*
         #{bool mbMeta.direct} `direct` - Interactons require direct messages or @-mentions
