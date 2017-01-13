@@ -16,14 +16,17 @@
   "dependencies": {
     "artillery-async": "1.0.2",
     "botkit": "0.4.9",
+    "chai": "3.5.0",
     "coffee-script": "1.12.2",
     "dotenv": "4.0.0",
     "graceful-fs": "4.1.11",
     "html-entities": "1.2.0",
+    "mocha": "3.2.0",
     "sqlite3": "3.1.8",
     "winston": "2.3.0"
   },
   "scripts": {
+    "test": "mocha --compilers coffee:coffee-script/register",
     "start": "coffee server.coffee",
     "dev": "nodemon -e coffee,js -x coffee server.coffee"
   },
