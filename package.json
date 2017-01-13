@@ -13,6 +13,27 @@
     "doc": "docs",
     "lib": "lib"
   },
+  "scripts": {
+    "test": "mocha --compilers coffee:coffee-script/register",
+    "coverage": "mocha --compilers coffee:coffee-script/register --require blanket --reporter mocha-lcov-reporter | coveralls",
+    "start": "coffee server.coffee",
+    "dev": "nodemon -e coffee,js -x coffee server.coffee"
+  },
+  "config": {
+    "blanket": {
+      "pattern": "lib",
+      "loader": "./node-loaders/coffee-script",
+      "data-cover-never": ["node_modules", "test"]
+    }
+  },
+  "homepage": "https://statico.github.io/memorybot/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/statico/memorybot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/statico/memorybot/issues"
+  },
   "dependencies": {
     "artillery-async": "1.0.2",
     "botkit": "0.4.9",
@@ -25,17 +46,9 @@
     "sqlite3": "3.1.8",
     "winston": "2.3.0"
   },
-  "scripts": {
-    "test": "mocha --compilers coffee:coffee-script/register",
-    "start": "coffee server.coffee",
-    "dev": "nodemon -e coffee,js -x coffee server.coffee"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/statico/memorybot.git"
-  },
-  "bugs": {
-    "url": "https://github.com/statico/memorybot/issues"
-  },
-  "homepage": "https://statico.github.io/memorybot/"
+  "devDependencies": {
+    "blanket": "1.2.3",
+    "coveralls": "2.11.15",
+    "mocha-lcov-reporter": "1.2.0"
+  }
 }
