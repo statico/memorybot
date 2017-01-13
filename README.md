@@ -2,6 +2,10 @@
 
 # memorybot
 
+[![Travis](https://img.shields.io/travis/statico/memorybot.svg)](https://travis-ci.org/statico/memorybot)
+[![Coveralls](https://img.shields.io/coveralls/statico/memorybot.svg)](https://coveralls.io/github/statico/memorybot)
+[![license](https://img.shields.io/github/license/statico/memorybot.svg)](https://github.com/statico/memorybot/blob/master/LICENSE)
+
 ## How to use it
 
 Check out the documentation on [https://statico.github.io/memorybot/](https://statico.github.io/memorybot/)
