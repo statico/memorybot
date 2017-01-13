@@ -8,15 +8,19 @@ fs = require 'graceful-fs'
 winston = require 'winston'
 {inspect} = require 'util'
 
-storage = require './lib/storage'
-logic = require './lib/logic'
+Store = require('./lib/store').SQLiteStore
+Engine = require('./lib/engine').MemoryBotEngine
 
 log = winston
 log.remove winston.transports.Console
 log.add winston.transports.Console, {timestamp: true, level: 'debug'}
 
-if not process.env.SLACK_TOKEN
-  throw new Error("Missing SLACK_TOKEN environment variable")
+for name in ['SLACK_TOKEN', 'DATA_DIR']
+  if not process.env[name]
+    throw new Error("Missing #{name} environment variable")
+
+store = new Store(process.env.DATA_DIR)
+engine = new Engine(store)
 
 controller = Botkit.slackbot(
   debug: process.env.DEBUG_SLACK
@@ -25,9 +29,9 @@ controller = Botkit.slackbot(
 
 controller.on 'hello', (bot, msg) ->
   team = bot.team_info.id
-  storage.initDatabase team, (err) ->
+  store.initialize team, (err) ->
     if err then return log.error "Couldn't initialize database: #{err}"
-    storage.updateBotMetadata bot, (err) ->
+    store.updateBotMetadata bot, (err) ->
       if err then return log.error "Couldn't update bot metadata: #{err}"
 
 controller.on 'direct_mention', (bot, msg) ->
@@ -58,7 +62,7 @@ userIdsToNames = {}
 
 handleMessage = (bot, sender, channel, isDirect, msg) ->
   if sender of userIdsToNames
-    logic.handleMessage bot, userIdsToNames[sender], channel, isDirect, msg
+    engine.handleMessage bot, userIdsToNames[sender], channel, isDirect, msg
   else
     bot.api.users.info {user: sender}, (err, data) ->
       if err
@@ -66,7 +70,7 @@ handleMessage = (bot, sender, channel, isDirect, msg) ->
       else
         name = data?.user?.name or sender
         userIdsToNames[sender] = name
-      logic.handleMessage bot, name, channel, isDirect, msg
+      engine.handleMessage bot, name, channel, isDirect, msg
 
 log.info "Starting memorybot..."
 controller
