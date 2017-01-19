@@ -16,9 +16,9 @@
   "scripts": {
     "start": "babel-node index.js",
     "dev": "nodemon -x babel-node index.js",
-    "test": "mocha --compilers js:babel-register",
+    "test": "mocha --compilers js:babel-register && npm run lint",
     "coverage": "mocha --compilers js:babel-register --require blanket --reporter mocha-lcov-reporter | coveralls",
-    "lint": "eslint *.js test/*.js lib/*.js"
+    "lint": "DEBUG=eslint:cli-engine eslint *.js test lib"
   },
   "config": {
     "blanket": {
