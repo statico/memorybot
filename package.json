@@ -14,16 +14,42 @@
     "lib": "lib"
   },
   "scripts": {
-    "test": "mocha --compilers coffee:coffee-script/register",
-    "coverage": "mocha --compilers coffee:coffee-script/register --require blanket --reporter mocha-lcov-reporter | coveralls",
-    "start": "coffee server.coffee",
-    "dev": "nodemon -e coffee,js -x coffee server.coffee"
+    "start": "babel-node index.js",
+    "dev": "nodemon -x babel-node index.js",
+    "test": "mocha --compilers js:babel-register",
+    "coverage": "mocha --compilers js:babel-register --require blanket --reporter mocha-lcov-reporter | coveralls",
+    "lint": "eslint *.js test/*.js lib/*.js"
   },
   "config": {
     "blanket": {
       "pattern": "lib",
-      "loader": "./node-loaders/coffee-script",
-      "data-cover-never": ["node_modules", "test"]
+      "data-cover-never": [
+        "node_modules",
+        "test"
+      ]
+    }
+  },
+  "babel": {
+    "presets": ["es2015", "stage-2"],
+    "plugins": []
+  },
+  "eslintConfig": {
+    "env": {
+      "es6": true,
+      "mocha": true,
+      "node": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+      "sourceType": "module"
+    },
+    "rules": {
+      "semi": 2,
+      "indent": ["error", 2, {"SwitchCase": 1}],
+      "no-unused-vars": ["error", {
+        "argsIgnorePattern": "^_+$",
+        "varsIgnorePattern": "^_+$"
+      }]
     }
   },
   "homepage": "https://statico.github.io/memorybot/",
@@ -38,7 +64,6 @@
     "artillery-async": "1.0.2",
     "botkit": "0.4.9",
     "chai": "3.5.0",
-    "coffee-script": "1.12.2",
     "dotenv": "4.0.0",
     "graceful-fs": "4.1.11",
     "html-entities": "1.2.0",
@@ -47,8 +72,13 @@
     "winston": "2.3.0"
   },
   "devDependencies": {
+    "babel-cli": "6.18.0",
+    "babel-preset-es2015": "6.18.0",
+    "babel-preset-stage-2": "6.18.0",
+    "babel-register": "6.18.0",
     "blanket": "1.2.3",
     "coveralls": "2.11.15",
+    "eslint": "3.13.1",
     "mocha-lcov-reporter": "1.2.0"
   }
 }
