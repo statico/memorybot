@@ -62,7 +62,8 @@ userIdsToNames = {}
 
 handleMessage = (bot, sender, channel, isDirect, msg) ->
   if sender of userIdsToNames
-    engine.handleMessage bot, userIdsToNames[sender], channel, isDirect, msg
+    engine.handleMessage bot, userIdsToNames[sender], channel, isDirect, msg, (err) ->
+      if err then log.error "handleMessage failed: #{err}"
   else
     bot.api.users.info {user: sender}, (err, data) ->
       if err
@@ -70,7 +71,8 @@ handleMessage = (bot, sender, channel, isDirect, msg) ->
       else
         name = data?.user?.name or sender
         userIdsToNames[sender] = name
-      engine.handleMessage bot, name, channel, isDirect, msg
+      engine.handleMessage bot, name, channel, isDirect, msg, (err) ->
+        if err then log.error "handleMessage failed: #{err}"
 
 log.info "Starting memorybot..."
 controller

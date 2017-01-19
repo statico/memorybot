@@ -1,3 +1,4 @@
+async = require 'artillery-async'
 sqlite3 = require 'sqlite3'
 {assert} = require 'chai'
 
@@ -57,21 +58,12 @@ class FakeBot
     @_lastReply = null
     return ret
 
-# This is a shitty way to test asynchronous code that might not return.
-run = (steps) ->
-  return (done) ->
-    steps.push done
-    for fn, i in steps
-      setTimeout fn.bind(this), i * 10
-
 describe 'MemoryBotEngine', ->
 
   beforeEach (done) ->
     @sender = 'testuser'
     @channel = 'PUB-123'
     @isDirect = false
-    @say = (msg) => @engine.handleMessage @bot, @sender, @channel, @isDirect, msg
-    Object.defineProperty this, 'last', get: => @bot.getLastReply()
 
     @bot = new FakeBot()
     @store = new TestStore()
@@ -80,13 +72,28 @@ describe 'MemoryBotEngine', ->
       assert.isNull err
       @store.updateBotMetadata @bot, done
 
+    @run = (done, script) ->
+      async.forEachSeries script, (line, cb) =>
+        if line is null
+          assert.isNull @bot.getLastReply()
+          cb()
+        else
+          [@sender, msg] = line.split ': '
+          if @sender is 'membot'
+            assert.equal @bot.getLastReply(), msg
+            cb()
+          else
+            @engine.handleMessage @bot, @sender, @channel, @isDirect, msg, cb
+      , (err) ->
+        done()
+
   afterEach (done) ->
     @store.destroy()
     done()
 
-  it 'should remember ambient factoids by default', run [
-    -> @say 'foo is bar'
-    -> assert.equal @last, null
-    -> @say 'what is foo?'
-    -> assert.equal @last, 'foo is bar'
+  it 'should remember ambient factoids by default', (done) -> @run done, [
+    'alice: foo is bar'
+    null
+    'alice: what is foo?'
+    'membot: foo is bar'
   ]
