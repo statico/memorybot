@@ -49,6 +49,7 @@ IGNORED_FACTOIDS = [
   "she"
   "that"
   "them"
+  "there"
   "these"
   "they"
   "this"
