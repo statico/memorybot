@@ -16,7 +16,7 @@
   "scripts": {
     "start": "babel-node index.js",
     "dev": "nodemon -x babel-node index.js",
-    "test": "mocha --compilers js:babel-register && npm run lint",
+    "test": "mocha --compilers js:babel-register && npm run -s lint",
     "coverage": "babel-node ./node_modules/istanbul/lib/cli.js cover node_modules/mocha/bin/_mocha -- test",
     "coveralls": "istanbul-coveralls",
     "lint": "eslint *.js test lib"
@@ -84,6 +84,7 @@
     "eslint": "3.13.1",
     "istanbul": "^1.0.0-alpha",
     "istanbul-coveralls": "1.0.3",
-    "mocha-lcov-reporter": "1.2.0"
+    "mocha-lcov-reporter": "1.2.0",
+    "winston-memory": "0.1.0"
   }
 }
