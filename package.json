@@ -19,7 +19,7 @@
     "test": "mocha --compilers js:babel-register && npm run lint",
     "coverage": "babel-node ./node_modules/istanbul/lib/cli.js cover node_modules/mocha/bin/_mocha -- test",
     "coveralls": "istanbul-coveralls",
-    "lint": "DEBUG=eslint:cli-engine eslint *.js test lib"
+    "lint": "eslint *.js test lib"
   },
   "babel": {
     "presets": [

@@ -3,8 +3,8 @@ require('dotenv').config(); // Read .env for local dev
 import Botkit from 'botkit';
 import winston from 'winston';
 
-import {SQLiteStore as Store} from './lib/store';
-import {MemoryBotEngine as Engine} from './lib/engine';
+import {SQLiteStore} from './lib/store';
+import {MemoryBotEngine} from './lib/engine';
 
 const log = winston;
 log.remove(winston.transports.Console);
@@ -16,9 +16,8 @@ for (let name of ['SLACK_TOKEN', 'DATA_DIR']) {
   }
 }
 
-const store = new Store(process.env.DATA_DIR);
-const engine = new Engine(store);
-
+const store = new SQLiteStore(process.env.DATA_DIR);
+const engine = new MemoryBotEngine(store);
 const controller = Botkit.slackbot({
   debug: process.env.DEBUG_SLACK,
   send_via_rtm: true
@@ -35,12 +34,10 @@ controller.on('hello', (bot, _) => {
 });
 
 controller.on('direct_mention', (bot, msg) => {
-  if (msg.user === bot.identity ? bot.identity.id : null) return;
   return handleMessage(bot, msg.user, msg.channel, true, msg.text);
 });
 
 controller.on('direct_message', (bot, msg) => {
-  if (msg.user === bot.identity ? bot.identity.id : null) return;
   return handleMessage(bot, msg.user, msg.channel, true, msg.text);
 });
 
@@ -49,11 +46,10 @@ controller.on('me_message', (bot, msg) => {
 });
 
 controller.on('ambient', (bot, msg) => {
-  if (msg.user === bot.identity ? bot.identity.id : null) return;
   let name = bot.identity ? bot.identity.name.toLowerCase() : null;
   let {text} = msg;
+  // Sometimes users might say "membot hey" or "membot: hey" instead of "@membot hey"
   if (text.toLowerCase().startsWith(`${name} `) || text.toLowerCase().startsWith(`${name}: `)) {
-    // Sometimes users might say "membot" instead of "@membot"
     text = text.substr(name.length + 1).replace(/^:\s+/, '');
     handleMessage(bot, msg.user, msg.channel, true, text);
   } else {
@@ -71,15 +67,12 @@ var handleMessage = (bot, sender, channel, isDirect, msg) => {
     });
   } else {
     bot.api.users.info({user: sender}, (err, data) => {
-      if (err) {
-        log.error(`Could not call users.info for user ${sender}: ${err}`);
-      } else {
-        let name = data ? data.user.name : sender;
-        userIdsToNames[sender] = name;
-        engine.handleMessage(bot, name, channel, isDirect, msg, err => {
-          if (err) return log.error(`handleMessage failed: ${err}`);
-        });
-      }
+      if (err) return log.error(`Could not call users.info for user ${sender}: ${err}`);
+      let name = data ? data.user.name : sender;
+      userIdsToNames[sender] = name;
+      engine.handleMessage(bot, name, channel, isDirect, msg, err => {
+        if (err) return log.error(`handleMessage failed: ${err}`);
+      });
     });
   }
 };
