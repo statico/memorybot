@@ -1,3 +1,4 @@
+import Random from 'random-js';
 import sqlite3 from 'sqlite3';
 import winston from 'winston';
 import {assert} from 'chai';
@@ -27,6 +28,28 @@ const TESTS = [
   },
 
   {
+    title: 'should remember things like the docs',
+    script: `\
+      alice: The foo is a great place for cat pictures
+      ...
+      alice: What is the foo?
+      membot: the foo is a great place for cat pictures
+    `
+  },
+
+  {
+    title: 'should append things like the docs',
+    script: `\
+      alice: GIF is pronounced like "gift"
+      ...
+      alice: GIF is also pronounced like "jiffy"
+      ...
+      alice: GIF?
+      membot: GIF is pronounced like "gift" or pronounced like "jiffy"
+    `
+  },
+
+  {
     title: 'should remember ambient factoids by default',
     script: `\
       alice: foo is bar
@@ -37,6 +60,15 @@ const TESTS = [
   }
 
 ];
+
+class TestEngine extends MemoryBotEngine {
+
+  constructor(store) {
+    super(store);
+    this._random = new Random(Random.engines.mt19937().seed(42));
+  }
+
+}
 
 class TestStore extends SQLiteStore {
 
@@ -114,7 +146,7 @@ describe('MemoryBotEngine', function() {
 
     this.bot = new FakeBot();
     this.store = new TestStore();
-    this.engine = new MemoryBotEngine(this.store);
+    this.engine = new TestEngine(this.store);
     this.store.initialize(this.bot.team_info.id, err => {
       assert.isNull(err);
       this.store.updateBotMetadata(this.bot, done);
@@ -129,29 +161,39 @@ describe('MemoryBotEngine', function() {
 
       let steps = script.trim().split(/\n/g).map(line => line.trim());
       forEachSeries(steps, (line, cb) => {
+
         if (line === '...') {
           assert.isNull(this.bot.lastReply, "bot should not have responded.");
           cb();
+
         } else {
           let [sender, ...msg] = line.split(' ');
           msg = msg.join(' ');
+
           let isEmote = !/:$/.test(sender);
-          this.sender = sender.replace(/:$/, '');
+          this.sender = sender = sender.replace(/:$/, '');
+
           if (sender === 'membot') {
             let last = this.bot.lastReply;
+
             if (isEmote) {
               assert.equal(last.method, 'chat.meMessage', "last bot reply should have been an emote");
-              assert.equal(last.args.text, msg, "emote should match");
+              assert.equal(last.args.text, msg, "bot emote");
+
             } else {
-              assert.equal(last, msg, "reply should match");
+              assert.equal(last, msg, "bot reply");
             }
             cb();
+
           } else {
             this.engine.handleMessage(this.bot, this.sender, this.channel, this.isDirect, msg, cb);
           }
         }
+
       }, done);
+
     });
+
   });
 
   afterEach(function(done) {
