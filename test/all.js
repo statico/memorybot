@@ -79,8 +79,40 @@ const TESTS = [
       alice: he who must not be named is Voldemort
       ...
       alice: tell bob about he who must not be named
-    `
-    // TODO [DM-123] OK, I told bob about he who must not be named
+    `,
+    after: function() {
+      assert.deepEqual(this.bot._replies, [
+        { method: 'im.open', args: { user: '1001' } },
+        {
+          options: { channel: '#im-1001' },
+          msg: { text: 'alice wants you to know: he who must not be named is Voldemort' }
+        }
+      ]);
+    }
+  },
+
+  {
+    title: 'should tell people things like the docs (verbose enabled)',
+    script: `\
+      alice: @membot enable setting verbose
+      membot: OK, I will now be extra chatty.
+      alice: he who must not be named is Voldemort
+      membot: Understood.
+      alice: tell bob about he who must not be named
+    `,
+    after: function() {
+      assert.deepEqual(this.bot._replies, [
+        { method: 'im.open', args: { user: '1001' } },
+        {
+          options: { channel: '#general' },
+          msg: { text: 'OK, I told bob about he who must not be named' }
+        },
+        {
+          options: { channel: '#im-1001' },
+          msg: { text: 'alice wants you to know: he who must not be named is Voldemort' }
+        }
+      ]);
+    }
   },
 
   {
@@ -147,7 +179,12 @@ class FakeBot {
       },
       im: {
         open: (args, cb) => {
-          this.api.callAPI('im.open', args, cb);
+          this._replies.push({method: 'im.open', args});
+          cb(null, {
+            channel: {
+              id: '#im-' + args.user
+            }
+          });
         }
       }
     };
@@ -168,7 +205,7 @@ describe('MemoryBotEngine', function() {
 
   beforeEach(function(done) {
     this.sender = 'testuser';
-    this.channel = 'PUB-123';
+    this.channel = '#general';
     this.isDirect = false;
 
     this.bot = new FakeBot();
@@ -190,7 +227,8 @@ describe('MemoryBotEngine', function() {
       forEachSeries(steps, (line, cb) => {
 
         if (line === '...') {
-          assert.isUndefined(this.bot._replies.shift(), "bot should not have responded.");
+          let last = this.bot._replies.shift();
+          assert.isUndefined(last, "bot should not have responded.");
           cb();
 
         } else {
@@ -223,7 +261,10 @@ describe('MemoryBotEngine', function() {
           }
         }
 
-      }, done);
+      }, (err) => {
+        if (after != null) after.call(this);
+        done(err);
+      });
 
     });
 

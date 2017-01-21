@@ -14,8 +14,8 @@
     "lib": "lib"
   },
   "scripts": {
-    "start": "babel-node index.js",
-    "dev": "nodemon -x babel-node index.js",
+    "start": "babel-node server.js",
+    "dev": "nodemon -x babel-node server.js",
     "test": "mocha --compilers js:babel-register && npm run -s lint",
     "coverage": "babel-node ./node_modules/istanbul/lib/cli.js cover node_modules/mocha/bin/_mocha -- test",
     "coveralls": "istanbul-coveralls",
