@@ -78,6 +78,8 @@ const TESTS = [
     script: `\
       alice: he who must not be named is Voldemort
       ...
+      bob: who are we talking about?
+      ...
       alice: tell bob about he who must not be named
     `,
     after: function() {
@@ -98,6 +100,8 @@ const TESTS = [
       membot: OK, I will now be extra chatty.
       alice: he who must not be named is Voldemort
       membot: Understood.
+      bob: who are we talking about?
+      ...
       alice: tell bob about he who must not be named
     `,
     after: function() {
@@ -122,6 +126,136 @@ const TESTS = [
       ...
       alice: tell quux about foo
       membot: I don't know who quux is.
+    `
+  },
+
+  {
+    title: 'should return a random result like the docs',
+    script: `\
+      alice: Schrodinger's cat is very happy | not happy at all
+      ...
+      alice: Schrodinger's cat?
+      membot: Schrodinger's cat is very happy
+      alice: Schrodinger's cat?
+      membot: Schrodinger's cat is not happy at all
+    `
+  },
+
+  {
+    title: 'should be able to roll a die',
+    script: `\
+      alice: roll 1d6 is <reply>1|<reply>2|<reply>3|<reply>4|<reply>5|<reply>6
+      ...
+      alice: roll 1d6?
+      membot: 1
+      alice: roll 1d6?
+      membot: 6
+    `
+  },
+
+  {
+    title: 'should be able to append a random response',
+    script: `\
+      alice: foo is bar
+      ...
+      alice: foo is also |baz
+      ...
+      alice: foo?
+      membot: foo is bar
+      alice: foo?
+      membot: foo is baz
+    `
+  },
+
+  {
+    title: 'should low a literal factoid like the docs',
+    script: `\
+      alice: Schrodinger's cat is very happy | not happy at all
+      ...
+      alice: literal Schrodinger's cat
+      membot: Schrodinger's cat is very happy | not happy at all
+    `
+  },
+
+  {
+    title: 'should hide the subject when replying like the docs',
+    script: `\
+      alice: hodor is <reply>hodor!
+      ...
+      alice: hodor?
+      membot: hodor!
+    `
+  },
+
+  {
+    title: 'should reply with actions like the docs',
+    script: `\
+      alice: licks membot is <action> exudes a foul oil
+      ...
+      alice licks membot
+      membot exudes a foul oil
+    `
+  },
+
+  {
+    title: 'should use the senders name in the reply like the docs',
+    script: `\
+      alice: ice cream is $who's favorite treat
+      ...
+      alice: ice cream?
+      membot: ice cream is alice's favorite treat
+    `
+  },
+
+  {
+    title: 'should change karma like in the docs',
+    script: `\
+      charlie: kittens++
+      ...
+      alice: kittens++ # so cute!
+      ...
+      bob: kittens--
+      ...
+      alice: karma for kittens?
+      membot: kittens has 1 karma
+    `
+  },
+
+  {
+    title: 'should get karma without a question mark',
+    script: `\
+      alice: kittens++
+      ...
+      alice: karma for kittens
+      membot: kittens has 1 karma
+    `
+  },
+
+  {
+    title: 'should require addressing to learn things when enabled like the docs',
+    script: `\
+      alice: @membot disable setting ambient
+      membot: OK, I will no longer learn factoids without being told explicitly.
+      alice: foo is bar
+      ...
+      alice: what is foo?
+      membot: No idea.
+    `
+  },
+
+  {
+    title: 'should require addressing to respond to things when enabled like the docs',
+    script: `\
+      alice: kittens are super cute
+      ...
+      alice: @membot enable setting direct
+      membot: OK, interactions with me now require direct messages or @-mentions.
+      alice: kittens?
+      ...
+      alice: hmm, nothing happened
+      ...
+      alice: @membot kittens?
+      membot: kittens are super cute
     `
   },
 
@@ -252,6 +386,7 @@ describe('MemoryBotEngine', function() {
           this.sender = sender = sender.replace(/:$/, '');
 
           if (sender === 'membot') {
+            assert.isAtLeast(this.bot._replies.length, 1, `number of bot replies after ${msg}`);
             let last = this.bot._replies.shift();
 
             if (isEmote) {
