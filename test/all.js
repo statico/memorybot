@@ -352,6 +352,24 @@ const TESTS = [
   },
 
   {
+    title: 'escapes @here and @channel and @everyone',
+    script: `\
+      alice: foo is <!here|@here> and <!channel|@channel> and <!everyone|@everyone>!
+      ...
+      alice: what is foo?
+      membot: foo is \`@here\` and \`@channel\` and \`@everyone\`!
+      alice: bar is <action> <!here|@here> and <!channel|@channel> and <!everyone|@everyone>!
+      ...
+      alice: what is bar?
+      membot \`@here\` and \`@channel\` and \`@everyone\`!
+      alice: baz is test@here.com and test@heretest.com and test@here
+      ...
+      alice: what is baz?
+      membot: baz is test@here.com and test@heretest.com and test@here
+    `
+  },
+
+  {
     title: 'should provide the user with some help text when direct messaging',
     script: `\
       alice: @membot help
