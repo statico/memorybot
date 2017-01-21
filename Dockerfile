@@ -13,7 +13,7 @@ COPY package.json ./
 RUN npm install
 
 COPY lib/ ./lib/
-COPY server.coffee  ./
+COPY server.js  ./
 
 ENV DATA_DIR /data
 VOLUME /data
