@@ -116,6 +116,16 @@ const TESTS = [
   },
 
   {
+    title: 'should not be able to tell someone who is not a user',
+    script: `\
+      alice: foo is bar
+      ...
+      alice: tell quux about foo
+      membot: I don't know who quux is.
+    `
+  },
+
+  {
     title: 'should remember ambient factoids by default',
     script: `\
       alice: foo is bar
