@@ -62,6 +62,18 @@ const TESTS = [
   },
 
   {
+    title: 'should tell us if a factoid is already the same',
+    script: `\
+      alice: foo is bar
+      ...
+      alice: foo is bar
+      membot: I already know that.
+      alice: no, foo is bar
+      membot: I've already got it as that.
+    `
+  },
+
+  {
     title: 'should forget things like the docs',
     script: `\
       alice: GIF is pronounced like "gift"
@@ -130,6 +142,14 @@ const TESTS = [
   },
 
   {
+    title: 'should not be able to tell someone something it doesn\'t know about',
+    script: `\
+      alice: tell bob about foo
+      membot: No idea.
+    `
+  },
+
+  {
     title: 'should return a random result like the docs',
     script: `\
       alice: Schrodinger's cat is very happy | not happy at all
@@ -174,6 +194,14 @@ const TESTS = [
       ...
       alice: literal Schrodinger's cat
       membot: Schrodinger's cat is very happy | not happy at all
+    `
+  },
+
+  {
+    title: 'should reply when not knowing about literal factoids',
+    script: `\
+      alice: literal foo?
+      membot: No idea.
     `
   },
 
@@ -267,6 +295,75 @@ const TESTS = [
       alice: what is foo?
       membot: foo is bar
     `
+  },
+
+  {
+    title: 'should reply with a greeting when addressed or direct is disabled',
+    script: `\
+      alice: hello
+      membot: Hello, alice
+      alice: @membot hello
+      membot: Hello, alice
+      alice: @membot enable setting direct
+      membot: OK, interactions with me now require direct messages or @-mentions.
+      alice: hello
+      ...
+    `
+  },
+
+  {
+    title: 'should reply when addressed with nothing',
+    script: `\
+      alice: membot?
+      membot: Yes?
+    `
+  },
+
+  {
+    title: 'should ignore certain phrases completely',
+    script: `\
+      alice: @membot enable setting verbose
+      membot: OK, I will now be extra chatty.
+      alice: this is foo
+      ...
+      alice: what is this?
+      ...
+      alice: what is that?
+      ...
+      alice: those are foo
+      ...
+      alice: what are those?
+      ...
+      alice: what?
+      ...
+      alice: huh?
+      ...
+      alice: who?
+      ...
+    `
+  },
+
+  {
+    title: 'should reply with default settings',
+    script: `\
+      alice: @membot status
+    `,
+    after: function() {
+      assert.deepEqual(this.bot._replies, [
+        {
+          options: { channel: '#general' },
+          msg: { text: `\
+*Status*
+I am memorybot v1.0.5 - https://statico.github.com/memorybot/
+I am currently remembering 3 factoids.
+*Settings*
+:white_medium_square: \`direct\` - Interactons require direct messages or @-mentions
+:ballot_box_with_check: \`ambient\` - Learn factoids from ambient room chatter
+:white_medium_square: \`verbose\` - Make the bot more chatty with confirmations, greetings, etc.
+Tell me "enable setting <name>" or "disable setting <name>" to change the above settings.` }
+        }
+      ]);
+    }
   }
 
 ];
@@ -303,7 +400,7 @@ class FakeBot {
 
   constructor() {
     this._replies = [];
-    this.identity = {name: 'fakebot'};
+    this.identity = {name: 'membot'};
     this.team_info = {id: 'T12345678'};
     this.api = {
       callAPI: (method, args, cb) => {
@@ -386,7 +483,7 @@ describe('MemoryBotEngine', function() {
           this.sender = sender = sender.replace(/:$/, '');
 
           if (sender === 'membot') {
-            assert.isAtLeast(this.bot._replies.length, 1, `number of bot replies after ${msg}`);
+            assert.isAtLeast(this.bot._replies.length, 1, `number of bot replies after "${msg}"`);
             let last = this.bot._replies.shift();
 
             if (isEmote) {
