@@ -50,6 +50,40 @@ const TESTS = [
   },
 
   {
+    title: 'should replace existing factoids like the docs',
+    script: `\
+      alice: GIF is pronounced like "gift"
+      ...
+      alice: no, GIF is pronounced however you want it to be!
+      ...
+      alice: GIF?
+      membot: GIF is pronounced however you want it to be!
+    `
+  },
+
+  {
+    title: 'should forget things like the docs',
+    script: `\
+      alice: GIF is pronounced like "gift"
+      ...
+      alice: @membot forget gif
+      membot: OK, I forgot about gif
+      alice: What is GIF?
+      membot: No idea.
+    `
+  },
+
+  {
+    title: 'should tell people things like the docs',
+    script: `\
+      alice: he who must not be named is Voldemort
+      ...
+      alice: tell bob about he who must not be named
+    `
+    // TODO [DM-123] OK, I told bob about he who must not be named
+  },
+
+  {
     title: 'should remember ambient factoids by default',
     script: `\
       alice: foo is bar
@@ -92,13 +126,13 @@ class TestStore extends SQLiteStore {
 class FakeBot {
 
   constructor() {
-    this._lastReply = null;
+    this._replies = [];
     this.identity = {name: 'fakebot'};
     this.team_info = {id: 'T12345678'};
     this.api = {
       callAPI: (method, args, cb) => {
-        this._lastReply = {method, args};
-        cb();
+        this._replies.push({method, args});
+        cb(null, {});
       },
       users: {
         list: (args, cb) => {
@@ -113,7 +147,7 @@ class FakeBot {
       },
       im: {
         open: (args, cb) => {
-          cb(null, { channel: { id: 'DM-123' } });
+          this.api.callAPI('im.open', args, cb);
         }
       }
     };
@@ -125,14 +159,7 @@ class FakeBot {
   }
 
   reply(options, msg) {
-    this._lastOptions = options;
-    this._lastReply = msg.text;
-  }
-
-  get lastReply() {
-    let ret = this._lastReply;
-    this._lastReply = null;
-    return ret;
+    this._replies.push({options, msg});
   }
 
 }
@@ -154,7 +181,7 @@ describe('MemoryBotEngine', function() {
   });
 
   TESTS.forEach(function(test) {
-    let {title, script, before} = test;
+    let {title, script, before, after} = test;
 
     it(title, function(done) {
       if (before != null) before.call(this);
@@ -163,30 +190,36 @@ describe('MemoryBotEngine', function() {
       forEachSeries(steps, (line, cb) => {
 
         if (line === '...') {
-          assert.isNull(this.bot.lastReply, "bot should not have responded.");
+          assert.isUndefined(this.bot._replies.shift(), "bot should not have responded.");
           cb();
 
         } else {
           let [sender, ...msg] = line.split(' ');
           msg = msg.join(' ');
 
+          this.isDirect = /^@membot\s+/.test(msg);
+          msg = msg.replace(/^@membot\s+/, '');
+
           let isEmote = !/:$/.test(sender);
           this.sender = sender = sender.replace(/:$/, '');
 
           if (sender === 'membot') {
-            let last = this.bot.lastReply;
+            let last = this.bot._replies.shift();
 
             if (isEmote) {
               assert.equal(last.method, 'chat.meMessage', "last bot reply should have been an emote");
               assert.equal(last.args.text, msg, "bot emote");
 
             } else {
-              assert.equal(last, msg, "bot reply");
+              assert.equal(last.msg.text, msg, "bot reply");
             }
+            this.bot.lastReply = null;
             cb();
 
           } else {
-            this.engine.handleMessage(this.bot, this.sender, this.channel, this.isDirect, msg, cb);
+            this.engine.handleMessage(this.bot, this.sender, this.channel, this.isDirect, msg, (err) => {
+              cb(err);
+            });
           }
         }
 
