@@ -349,20 +349,19 @@ const TESTS = [
       alice: @membot status
     `,
     after: function() {
-      assert.deepEqual(this.bot._replies, [
-        {
-          options: { channel: '#general' },
-          msg: { text: `\
+      assert.equal(this.bot._replies.length, 1);
+      let status = this.bot._replies[0].msg.text;
+      status = status.replace(/v\d+\.\d+\.\d+/, 'vX.X.X'); // Ignore version for testing.
+      assert.equal(status, `\
 *Status*
-I am memorybot v1.0.5 - https://statico.github.com/memorybot/
+I am memorybot vX.X.X - https://statico.github.com/memorybot/
 I am currently remembering 3 factoids.
 *Settings*
 :white_medium_square: \`direct\` - Interactons require direct messages or @-mentions
 :ballot_box_with_check: \`ambient\` - Learn factoids from ambient room chatter
 :white_medium_square: \`verbose\` - Make the bot more chatty with confirmations, greetings, etc.
-Tell me "enable setting <name>" or "disable setting <name>" to change the above settings.` }
-        }
-      ]);
+Tell me "enable setting <name>" or "disable setting <name>" to change the above settings.`
+      );
     }
   }
 
