@@ -340,6 +340,22 @@ const TESTS = [
       ...
       alice: who?
       ...
+      alice: status is foo
+      ...
+      alice: status?
+      ...
+      alice: help is foo
+      ...
+      alice: help?
+      ...
+    `
+  },
+
+  {
+    title: 'should provide the user with some help text when direct messaging',
+    script: `\
+      alice: @membot help
+      membot: Hi alice, I'm a MemoryBot. I remember things and then recall them later when asked. Check out my home page for more information: https://statico.github.io/memorybot/
     `
   },
 
