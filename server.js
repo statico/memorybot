@@ -80,7 +80,7 @@ var handleMessage = (bot, sender, channel, isDirect, msg) => {
 log.info("Starting memorybot...");
 const bot = controller.spawn({token: process.env.SLACK_TOKEN});
 function startRTM() {
-  bot.startRTM((err, bot, payload) => {
+  bot.startRTM((err) => {
     if (err) {
       log.error(`Failed to start Slack RTM: ${err}`);
       setTimeout(startRTM, 30 * 1000);
