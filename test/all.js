@@ -132,6 +132,24 @@ const TESTS = [
   },
 
   {
+    title: 'should be able to tell things but ignore an @ sign in the name',
+    script: `\
+      alice: foo is bar
+      ...
+      alice: tell @bob about foo
+    `,
+    after: function() {
+      assert.deepEqual(this.bot._replies, [
+        { method: 'im.open', args: { user: '1001' } },
+        {
+          options: { channel: '#im-1001' },
+          msg: { text: 'alice wants you to know: foo is bar' }
+        }
+      ]);
+    }
+  },
+
+  {
     title: 'should not be able to tell someone who is not a user',
     script: `\
       alice: foo is bar
