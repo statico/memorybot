@@ -250,6 +250,16 @@ const TESTS = [
   },
 
   {
+    title: 'should get karma without a preposition',
+    script: `\
+      alice: kittens++
+      ...
+      alice: karma kittens
+      membot: kittens has 1 karma
+    `
+  },
+
+  {
     title: 'should get karma without a question mark',
     script: `\
       alice: kittens++
