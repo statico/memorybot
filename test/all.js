@@ -133,15 +133,21 @@ const TESTS = [
   },
 
   {
-    title: 'should be able to tell things but ignore an @ sign in the name',
+    title: 'should be able to tell facts to people addressed by Slack ID',
     script: `\
+      alice: @membot enable setting verbose
+      membot: OK, I will now be extra chatty.
       alice: foo is bar
-      ...
-      alice: tell @bob about foo
+      membot: Understood.
+      alice: tell <@1001> about foo
     `,
     after: function () {
       assert.deepEqual(this.bot._replies, [
         { method: 'im.open', args: { user: '1001' } },
+        {
+          options: { channel: '#general' },
+          msg: { text: 'OK, I told <@1001> about foo' } // Slack replaces this with '@bob'
+        },
         {
           options: { channel: '#im-1001' },
           msg: { text: 'alice wants you to know: foo is bar' }
