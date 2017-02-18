@@ -1,17 +1,18 @@
-import Random from 'random-js';
-import sqlite3 from 'sqlite3';
-import winston from 'winston';
-import {assert} from 'chai';
-import {forEachSeries} from 'artillery-async';
+/* eslint-env mocha */
+import Random from 'random-js'
+import sqlite3 from 'sqlite3'
+import winston from 'winston'
+import {assert} from 'chai'
+import {forEachSeries} from 'artillery-async'
 
-require('winston-memory');
+require('winston-memory')
 
-import {MemoryBotEngine} from '../lib/engine';
-import {SQLiteStore} from '../lib/store';
+import {MemoryBotEngine} from '../lib/engine'
+import {SQLiteStore} from '../lib/store'
 
-const log = winston;
-log.remove(winston.transports.Console);
-log.add(winston.transports.Memory);
+const log = winston
+log.remove(winston.transports.Console)
+log.add(winston.transports.Memory)
 
 const TESTS = [
 
@@ -94,14 +95,14 @@ const TESTS = [
       ...
       alice: tell bob about he who must not be named
     `,
-    after: function() {
+    after: function () {
       assert.deepEqual(this.bot._replies, [
         { method: 'im.open', args: { user: '1001' } },
         {
           options: { channel: '#im-1001' },
           msg: { text: 'alice wants you to know: he who must not be named is Voldemort' }
         }
-      ]);
+      ])
     }
   },
 
@@ -116,7 +117,7 @@ const TESTS = [
       ...
       alice: tell bob about he who must not be named
     `,
-    after: function() {
+    after: function () {
       assert.deepEqual(this.bot._replies, [
         { method: 'im.open', args: { user: '1001' } },
         {
@@ -127,7 +128,7 @@ const TESTS = [
           options: { channel: '#im-1001' },
           msg: { text: 'alice wants you to know: he who must not be named is Voldemort' }
         }
-      ]);
+      ])
     }
   },
 
@@ -138,14 +139,14 @@ const TESTS = [
       ...
       alice: tell @bob about foo
     `,
-    after: function() {
+    after: function () {
       assert.deepEqual(this.bot._replies, [
         { method: 'im.open', args: { user: '1001' } },
         {
           options: { channel: '#im-1001' },
           msg: { text: 'alice wants you to know: foo is bar' }
         }
-      ]);
+      ])
     }
   },
 
@@ -410,10 +411,10 @@ const TESTS = [
     script: `\
       alice: @membot status
     `,
-    after: function() {
-      assert.equal(this.bot._replies.length, 1);
-      let status = this.bot._replies[0].msg.text;
-      status = status.replace(/v\d+\.\d+\.\d+/, 'vX.X.X'); // Ignore version for testing.
+    after: function () {
+      assert.equal(this.bot._replies.length, 1)
+      let status = this.bot._replies[0].msg.text
+      status = status.replace(/v\d+\.\d+\.\d+/, 'vX.X.X') // Ignore version for testing.
       assert.equal(status, `\
 *Status*
 I am memorybot vX.X.X - https://statico.github.com/memorybot/
@@ -423,35 +424,35 @@ I am currently remembering 3 factoids.
 :ballot_box_with_check: \`ambient\` - Learn factoids from ambient room chatter
 :white_medium_square: \`verbose\` - Make the bot more chatty with confirmations, greetings, etc.
 Tell me "enable setting <name>" or "disable setting <name>" to change the above settings.`
-      );
+      )
     }
   }
 
-];
+]
 
 class TestEngine extends MemoryBotEngine {
 
-  constructor(store) {
-    super(store);
-    this._random = new Random(Random.engines.mt19937().seed(42));
+  constructor (store) {
+    super(store)
+    this._random = new Random(Random.engines.mt19937().seed(42))
   }
 
 }
 
 class TestStore extends SQLiteStore {
 
-  constructor() {
-    super("not used because we'll use in-memory storage");
-    this.db = new sqlite3.cached.Database(':memory:');
+  constructor () {
+    super("not used because we'll use in-memory storage")
+    this.db = new sqlite3.cached.Database(':memory:')
   }
 
-  getDatabase(_) {
-    return this.db;
+  getDatabase (_) {
+    return this.db
   }
 
-  destroy() {
-    this.db.close();
-    this.db = null;
+  destroy () {
+    this.db.close()
+    this.db = null
   }
 
 }
@@ -459,14 +460,14 @@ class TestStore extends SQLiteStore {
 // This emulates enough of a Botkit bot for the MemoryBot engine to use.
 class FakeBot {
 
-  constructor() {
-    this._replies = [];
-    this.identity = {name: 'membot'};
-    this.team_info = {id: 'T12345678'};
+  constructor () {
+    this._replies = []
+    this.identity = {name: 'membot'}
+    this.team_info = {id: 'T12345678'}
     this.api = {
       callAPI: (method, args, cb) => {
-        this._replies.push({method, args});
-        cb(null, {});
+        this._replies.push({method, args})
+        cb(null, {})
       },
       users: {
         list: (args, cb) => {
@@ -476,107 +477,97 @@ class FakeBot {
               {name: 'bob', id: '1001'},
               {name: 'charlie', id: '1002'}
             ]
-          });
+          })
         }
       },
       im: {
         open: (args, cb) => {
-          this._replies.push({method: 'im.open', args});
+          this._replies.push({method: 'im.open', args})
           cb(null, {
             channel: {
               id: '#im-' + args.user
             }
-          });
+          })
         }
       }
-    };
-
+    }
   }
 
-  identifyTeam() {
-    return this.team_info.id;
+  identifyTeam () {
+    return this.team_info.id
   }
 
-  reply(options, msg) {
-    this._replies.push({options, msg});
+  reply (options, msg) {
+    this._replies.push({options, msg})
   }
 
 }
 
-describe('MemoryBotEngine', function() {
+describe('MemoryBotEngine', function () {
+  beforeEach(function (done) {
+    this.sender = 'testuser'
+    this.channel = '#general'
+    this.isDirect = false
 
-  beforeEach(function(done) {
-    this.sender = 'testuser';
-    this.channel = '#general';
-    this.isDirect = false;
-
-    this.bot = new FakeBot();
-    this.store = new TestStore();
-    this.engine = new TestEngine(this.store);
+    this.bot = new FakeBot()
+    this.store = new TestStore()
+    this.engine = new TestEngine(this.store)
     this.store.initialize(this.bot.team_info.id, err => {
-      assert.isNull(err);
-      this.store.updateBotMetadata(this.bot, done);
-    });
-  });
+      assert.isNull(err)
+      this.store.updateBotMetadata(this.bot, done)
+    })
+  })
 
-  TESTS.forEach(function(test) {
-    let {title, script, before, after} = test;
+  TESTS.forEach(function (test) {
+    let {title, script, before, after} = test
 
-    it(title, function(done) {
-      if (before != null) before.call(this);
+    it(title, function (done) {
+      if (before != null) before.call(this)
 
-      let steps = script.trim().split(/\n/g).map(line => line.trim());
+      let steps = script.trim().split(/\n/g).map(line => line.trim())
       forEachSeries(steps, (line, cb) => {
-
         if (line === '...') {
-          let last = this.bot._replies.shift();
-          assert.isUndefined(last, "bot should not have responded.");
-          cb();
-
+          let last = this.bot._replies.shift()
+          assert.isUndefined(last, 'bot should not have responded.')
+          cb()
         } else {
-          let [sender, ...msg] = line.split(' ');
-          msg = msg.join(' ');
+          let [sender, ...msg] = line.split(' ')
+          msg = msg.join(' ')
 
-          this.isDirect = /^@membot\s+/.test(msg);
-          msg = msg.replace(/^@membot\s+/, '');
+          this.isDirect = /^@membot\s+/.test(msg)
+          msg = msg.replace(/^@membot\s+/, '')
 
-          let isEmote = !/:$/.test(sender);
-          this.sender = sender = sender.replace(/:$/, '');
+          let isEmote = !/:$/.test(sender)
+          this.sender = sender = sender.replace(/:$/, '')
 
           if (sender === 'membot') {
-            assert.isAtLeast(this.bot._replies.length, 1, `number of bot replies after "${msg}"`);
-            let last = this.bot._replies.shift();
+            assert.isAtLeast(this.bot._replies.length, 1, `number of bot replies after "${msg}"`)
+            let last = this.bot._replies.shift()
 
             if (isEmote) {
-              assert.equal(last.method, 'chat.meMessage', "last bot reply should have been an emote");
-              assert.equal(last.args.text, msg, "bot emote");
-
+              assert.equal(last.method, 'chat.meMessage', 'last bot reply should have been an emote')
+              assert.equal(last.args.text, msg, 'bot emote')
             } else {
-              assert.equal(last.msg.text, msg, "bot reply");
+              assert.equal(last.msg.text, msg, 'bot reply')
             }
-            this.bot.lastReply = null;
-            cb();
-
+            this.bot.lastReply = null
+            cb()
           } else {
             this.engine.handleMessage(this.bot, this.sender, this.channel, this.isDirect, msg, (err) => {
-              cb(err);
-            });
+              cb(err)
+            })
           }
         }
-
       }, (err) => {
-        if (after != null) after.call(this);
-        done(err);
-      });
+        if (after != null) after.call(this)
+        done(err)
+      })
+    })
+  })
 
-    });
-
-  });
-
-  afterEach(function(done) {
-    this.store.destroy();
-    return done();
-  });
-
-});
+  afterEach(function (done) {
+    this.store.destroy()
+    return done()
+  })
+})
 

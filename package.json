@@ -16,10 +16,9 @@
   "scripts": {
     "start": "babel-node server.js",
     "dev": "nodemon -x babel-node server.js",
-    "test": "mocha --compilers js:babel-register && npm run -s lint",
+    "test": "mocha --compilers js:babel-register && standard | snazzy",
     "coverage": "babel-node ./node_modules/istanbul/lib/cli.js cover node_modules/mocha/bin/_mocha -- test",
-    "coveralls": "istanbul-coveralls",
-    "lint": "eslint *.js test lib"
+    "coveralls": "istanbul-coveralls"
   },
   "babel": {
     "presets": [
@@ -27,34 +26,6 @@
       "stage-2"
     ],
     "plugins": []
-  },
-  "eslintConfig": {
-    "env": {
-      "es6": true,
-      "mocha": true,
-      "node": true
-    },
-    "extends": "eslint:recommended",
-    "parserOptions": {
-      "sourceType": "module"
-    },
-    "rules": {
-      "semi": 2,
-      "indent": [
-        "error",
-        2,
-        {
-          "SwitchCase": 1
-        }
-      ],
-      "no-unused-vars": [
-        "error",
-        {
-          "argsIgnorePattern": "^_+$",
-          "varsIgnorePattern": "^_+$"
-        }
-      ]
-    }
   },
   "homepage": "https://statico.github.io/memorybot/",
   "repository": {
@@ -82,10 +53,11 @@
     "babel-preset-stage-2": "6.18.0",
     "babel-register": "6.18.0",
     "coveralls": "2.11.15",
-    "eslint": "3.13.1",
     "istanbul": "^1.0.0-alpha",
     "istanbul-coveralls": "1.0.3",
     "mocha-lcov-reporter": "1.2.0",
+    "snazzy": "^6.0.0",
+    "standard": "^8.6.0",
     "winston-memory": "0.1.0"
   }
 }
