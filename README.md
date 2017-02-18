@@ -2,10 +2,11 @@
 
 # memorybot
 
-[![Travis](https://img.shields.io/travis/statico/memorybot.svg)](https://travis-ci.org/statico/memorybot)
-[![Coveralls](https://img.shields.io/coveralls/statico/memorybot.svg)](https://coveralls.io/github/statico/memorybot)
-[![license](https://img.shields.io/github/license/statico/memorybot.svg)](https://github.com/statico/memorybot/blob/master/LICENSE)
-[![Docker](https://img.shields.io/docker/automated/statico/memorybot.svg)](https://hub.docker.com/r/statico/memorybot/)
+[![Travis](https://img.shields.io/travis/statico/memorybot.svg?style=flat-square)](https://travis-ci.org/statico/memorybot)
+[![issues](https://img.shields.io/github/issues/statico/memorybot.svg?style=flat-square)](https://github.com/statico/memorybot/issues)
+[![Coveralls](https://img.shields.io/coveralls/statico/memorybot.svg?style=flat-square)](https://coveralls.io/github/statico/memorybot)
+[![license](https://img.shields.io/github/license/statico/memorybot.svg?style=flat-square)](https://github.com/statico/memorybot/blob/master/LICENSE)
+[![Docker](https://img.shields.io/docker/automated/statico/memorybot.svg?style=flat-square)](https://hub.docker.com/r/statico/memorybot/)
 
 ## How to use it
 
