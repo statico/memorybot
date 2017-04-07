@@ -198,6 +198,16 @@ const TESTS = [
   },
 
   {
+    title: 'should not reply to things like the docs',
+    script: `\
+      alice: don't reply is <reply>
+      ...
+      alice: don't reply?
+      ...
+    `
+  },
+
+  {
     title: 'should be able to append a random response',
     script: `\
       alice: foo is bar
