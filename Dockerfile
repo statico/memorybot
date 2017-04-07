@@ -2,7 +2,7 @@ FROM ubuntu:16.04
 
 RUN apt-get update
 
-ENV NODE_VERSION 6.9.4
+ENV NODE_VERSION 7.8.0
 ADD https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.gz /node.tar.gz
 RUN tar -xzf /node.tar.gz -C /usr/local --strip-components=1 && rm /node.tar.gz
 
