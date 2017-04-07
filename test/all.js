@@ -388,6 +388,10 @@ const TESTS = [
       ...
       alice: status?
       ...
+      alice: settings are foo
+      ...
+      alice: settings?
+      ...
       alice: help is foo
       ...
       alice: help?
@@ -440,6 +444,18 @@ I am currently remembering 3 factoids.
 :white_medium_square: \`verbose\` - Make the bot more chatty with confirmations, greetings, etc.
 Tell me "enable setting <name>" or "disable setting <name>" to change the above settings.`
       )
+    }
+  },
+
+  {
+    title: 'should treat settings as an alias for status',
+    script: `\
+      alice: @membot settings
+    `,
+    after: function () {
+      assert.equal(this.bot._replies.length, 1)
+      let status = this.bot._replies[0].msg.text
+      assert.match(status, /\*Settings\*\n/)
     }
   }
 
