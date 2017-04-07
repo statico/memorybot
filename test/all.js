@@ -1,9 +1,8 @@
 /* eslint-env mocha */
 import Random from 'random-js'
-import sqlite3 from 'sqlite3'
+import sqlite from 'sqlite'
 import winston from 'winston'
 import {assert} from 'chai'
-import {forEachSeries} from 'artillery-async'
 
 require('winston-memory')
 
@@ -449,14 +448,14 @@ class TestStore extends SQLiteStore {
 
   constructor () {
     super("not used because we'll use in-memory storage")
-    this.db = new sqlite3.cached.Database(':memory:')
   }
 
-  getDatabase (_) {
+  async getDatabase (_) {
+    this.db = this.db || await sqlite.open(':memory:')
     return this.db
   }
 
-  destroy () {
+  async destroy () {
     this.db.close()
     this.db = null
   }
@@ -510,7 +509,7 @@ class FakeBot {
 }
 
 describe('MemoryBotEngine', function () {
-  beforeEach(function (done) {
+  beforeEach(async function () {
     this.sender = 'testuser'
     this.channel = '#general'
     this.isDirect = false
@@ -518,24 +517,22 @@ describe('MemoryBotEngine', function () {
     this.bot = new FakeBot()
     this.store = new TestStore()
     this.engine = new TestEngine(this.store)
-    this.store.initialize(this.bot.team_info.id, err => {
-      assert.isNull(err)
-      this.store.updateBotMetadata(this.bot, done)
-    })
+    await this.store.initialize(this.bot.team_info.id)
+    await this.store.updateBotMetadata(this.bot)
   })
 
-  TESTS.forEach(function (test) {
+  TESTS.forEach(async function (test) {
     let {title, script, before, after} = test
 
-    it(title, function (done) {
+    it(title, async function () {
       if (before != null) before.call(this)
 
-      let steps = script.trim().split(/\n/g).map(line => line.trim())
-      forEachSeries(steps, (line, cb) => {
+      let lines = script.trim().split(/\n/g).map(line => line.trim())
+      for (let line of lines) {
         if (line === '...') {
           let last = this.bot._replies.shift()
           assert.isUndefined(last, 'bot should not have responded.')
-          cb()
+          continue
         } else {
           let [sender, ...msg] = line.split(' ')
           msg = msg.join(' ')
@@ -557,23 +554,19 @@ describe('MemoryBotEngine', function () {
               assert.equal(last.msg.text, msg, 'bot reply')
             }
             this.bot.lastReply = null
-            cb()
+            continue
           } else {
-            this.engine.handleMessage(this.bot, this.sender, this.channel, this.isDirect, msg, (err) => {
-              cb(err)
-            })
+            await this.engine.handleMessage(this.bot, this.sender, this.channel, this.isDirect, msg)
           }
         }
-      }, (err) => {
-        if (after != null) after.call(this)
-        done(err)
-      })
+      }
+
+      if (after != null) after.call(this)
     })
   })
 
-  afterEach(function (done) {
-    this.store.destroy()
-    return done()
+  afterEach(async function () {
+    await this.store.destroy()
   })
 })
 

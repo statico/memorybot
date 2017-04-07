@@ -2,6 +2,7 @@ require('dotenv').config() // Read .env for local dev
 
 import Botkit from 'botkit'
 import winston from 'winston'
+import denodeify from 'denodeify'
 
 import {SQLiteStore} from './lib/store'
 import {MemoryBotEngine} from './lib/engine'
@@ -23,29 +24,25 @@ const controller = Botkit.slackbot({
   send_via_rtm: true
 })
 
-controller.on('hello', (bot, _) => {
+controller.on('hello', async (bot, _) => {
   let team = bot.team_info.id
-  store.initialize(team, err => {
-    if (err) return log.error(`Couldn't initialize database: ${err}`)
-    store.updateBotMetadata(bot, err => {
-      if (err) return log.error(`Couldn't update bot metadata: ${err}`)
-    })
-  })
+  await store.initialize(team)
+  await store.updateBotMetadata(bot)
 })
 
-controller.on('direct_mention', (bot, msg) => {
-  return handleMessage(bot, msg.user, msg.channel, true, msg.text)
+controller.on('direct_mention', async (bot, msg) => {
+  handleMessage(bot, msg.user, msg.channel, true, msg.text)
 })
 
-controller.on('direct_message', (bot, msg) => {
-  return handleMessage(bot, msg.user, msg.channel, true, msg.text)
+controller.on('direct_message', async (bot, msg) => {
+  handleMessage(bot, msg.user, msg.channel, true, msg.text)
 })
 
-controller.on('me_message', (bot, msg) => {
+controller.on('me_message', async (bot, msg) => {
   handleMessage(bot, msg.user, msg.channel, false, msg.text)
 })
 
-controller.on('ambient', (bot, msg) => {
+controller.on('ambient', async (bot, msg) => {
   let name = bot.identity ? bot.identity.name.toLowerCase() : null
   let {text} = msg
   // Sometimes users might say "membot hey" or "membot: hey" instead of "@membot hey"
@@ -60,20 +57,18 @@ controller.on('ambient', (bot, msg) => {
 // Cache Slack user IDs to names in memory.
 let userIdsToNames = {}
 
-var handleMessage = (bot, sender, channel, isDirect, msg) => {
-  if (sender in userIdsToNames) {
-    engine.handleMessage(bot, userIdsToNames[sender], channel, isDirect, msg, err => {
-      if (err) return log.error(`handleMessage failed: ${err}`)
-    })
-  } else {
-    bot.api.users.info({user: sender}, (err, data) => {
-      if (err) return log.error(`Could not call users.info for user ${sender}: ${err}`)
+async function handleMessage (bot, sender, channel, isDirect, msg) {
+  try {
+    if (sender in userIdsToNames) {
+      await engine.handleMessage(bot, userIdsToNames[sender], channel, isDirect, msg)
+    } else {
+      let data = await denodeify(bot.api.users.info.bind(bot.api.users))({user: sender})
       let name = data ? data.user.name : sender
       userIdsToNames[sender] = name
-      engine.handleMessage(bot, name, channel, isDirect, msg, err => {
-        if (err) return log.error(`handleMessage failed: ${err}`)
-      })
-    })
+      await engine.handleMessage(bot, name, channel, isDirect, msg)
+    }
+  } catch (err) {
+    log.error(`handleMessage failed: ${err}`)
   }
 }
 
