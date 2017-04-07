@@ -58,6 +58,7 @@ controller.on('ambient', async (bot, msg) => {
 let userIdsToNames = {}
 
 async function handleMessage (bot, sender, channel, isDirect, msg) {
+  if (sender === bot.identity.id) return
   try {
     if (sender in userIdsToNames) {
       await engine.handleMessage(bot, userIdsToNames[sender], channel, isDirect, msg)
