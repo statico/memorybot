@@ -62,6 +62,16 @@ const TESTS = [
   },
 
   {
+    title: 'should tell us if a factoid is already something else',
+    script: `\
+      alice: foo is bar
+      ...
+      alice: foo is baz
+      membot: But foo is already bar
+    `
+  },
+
+  {
     title: 'should tell us if a factoid is already the same',
     script: `\
       alice: foo is bar
