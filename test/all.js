@@ -84,6 +84,18 @@ const TESTS = [
   },
 
   {
+    title: 'should trim "but" from factoids',
+    script: `\
+      alice: what is foo?
+      membot: No idea.
+      alice: but foo is bar
+      ...
+      alice: what is foo?
+      membot: foo is bar
+    `
+  },
+
+  {
     title: 'should forget things like the docs',
     script: `\
       alice: GIF is pronounced like "gift"
