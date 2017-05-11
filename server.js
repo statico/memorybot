@@ -1,11 +1,11 @@
-require('dotenv').config() // Read .env for local dev
-
 import Botkit from 'botkit'
 import winston from 'winston'
 import denodeify from 'denodeify'
 
 import {SQLiteStore} from './lib/store'
 import {MemoryBotEngine} from './lib/engine'
+
+require('dotenv').config() // Read .env for local dev
 
 const log = winston
 log.remove(winston.transports.Console)

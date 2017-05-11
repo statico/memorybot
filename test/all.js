@@ -4,10 +4,10 @@ import sqlite from 'sqlite'
 import winston from 'winston'
 import {assert} from 'chai'
 
-require('winston-memory')
-
 import {MemoryBotEngine} from '../lib/engine'
 import {SQLiteStore} from '../lib/store'
+
+require('winston-memory')
 
 const log = winston
 log.remove(winston.transports.Console)
@@ -484,16 +484,13 @@ Tell me "enable setting <name>" or "disable setting <name>" to change the above 
 ]
 
 class TestEngine extends MemoryBotEngine {
-
   constructor (store) {
     super(store)
     this._random = new Random(Random.engines.mt19937().seed(42))
   }
-
 }
 
 class TestStore extends SQLiteStore {
-
   constructor () {
     super("not used because we'll use in-memory storage")
   }
@@ -507,12 +504,10 @@ class TestStore extends SQLiteStore {
     this.db.close()
     this.db = null
   }
-
 }
 
 // This emulates enough of a Botkit bot for the MemoryBot engine to use.
 class FakeBot {
-
   constructor () {
     this._replies = []
     this.identity = {name: 'membot'}
@@ -553,7 +548,6 @@ class FakeBot {
   reply (options, msg) {
     this._replies.push({options, msg})
   }
-
 }
 
 describe('MemoryBotEngine', function () {
@@ -621,4 +615,3 @@ describe('MemoryBotEngine', function () {
     await this.store.destroy()
   })
 })
-

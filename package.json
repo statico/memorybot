@@ -17,6 +17,7 @@
     "start": "babel-node server.js",
     "dev": "nodemon -x babel-node server.js",
     "test": "mocha --require babel-polyfill --compilers js:babel-register && standard | snazzy",
+    "lint": "standard | snazzy",
     "coverage": "babel-node ./node_modules/istanbul/lib/cli.js cover node_modules/mocha/bin/_mocha -- test",
     "coveralls": "istanbul-coveralls"
   },
