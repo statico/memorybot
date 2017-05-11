@@ -609,7 +609,11 @@ describe('MemoryBotEngine', function () {
         }
       }
 
-      if (after != null) after.call(this)
+      if (after == null) {
+        assert.equal(this.bot._replies.length, 0, 'no outstanding replies')
+      } else {
+        after.call(this)
+      }
     })
   })
 
